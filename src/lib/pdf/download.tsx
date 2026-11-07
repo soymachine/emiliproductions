@@ -1,0 +1,38 @@
+"use client";
+
+import type { CompanySettings, Invoice, Quote } from "../types";
+
+function safeName(s: string) {
+  // Sin tildes ni símbolos: algunos navegadores ignoran el nombre si los lleva.
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w .-]+/g, "")
+    .trim()
+    .slice(0, 60);
+}
+
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+// La librería de PDF se carga solo cuando hace falta, para que la app arranque rápido.
+
+export async function downloadQuotePdf(quote: Quote, company: CompanySettings) {
+  const [{ pdf }, { QuotePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./QuotePdf")]);
+  const blob = await pdf(<QuotePdf quote={quote} company={company} />).toBlob();
+  saveBlob(blob, `Presupuesto ${quote.number} ${safeName(quote.client.name)}.pdf`);
+}
+
+export async function downloadInvoicePdf(invoice: Invoice, company: CompanySettings) {
+  const [{ pdf }, { InvoicePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./InvoicePdf")]);
+  const blob = await pdf(<InvoicePdf invoice={invoice} company={company} />).toBlob();
+  saveBlob(blob, `Factura ${invoice.number} ${safeName(invoice.client.name)}.pdf`);
+}
