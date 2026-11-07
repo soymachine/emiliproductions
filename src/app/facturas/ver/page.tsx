@@ -94,7 +94,7 @@ function InvoiceView() {
                 {inv.lines.map((l, i) => (
                   <tr key={i}>
                     <td className="px-4 py-3">
-                      <p className="font-medium">{l.description}</p>
+                      <p className="whitespace-pre-line font-medium">{l.description}</p>
                       {l.widthMm && l.heightMm ? (
                         <p className="text-sm text-muted-foreground">
                           {l.widthMm} × {l.heightMm} mm

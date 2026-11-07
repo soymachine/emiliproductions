@@ -2,7 +2,7 @@ import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { formatDate } from "../dates";
 import { formatEuros, lineTotalCents } from "../money";
 import type { CompanySettings, Invoice } from "../types";
-import { ClientBox, CompanyHeader, Footer, measures, qty, s, TotalsBlock } from "./common";
+import { ClientBox, CompanyHeader, Footer, GdprText, LineDescription, measures, qty, s, TotalsBlock } from "./common";
 
 const COL = { desc: 1, qty: 45, price: 80, amount: 85 };
 
@@ -23,7 +23,7 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
           <ClientBox client={invoice.client} />
         </View>
 
-        <View style={s.thead} fixed>
+        <View style={s.thead}>
           <Text style={{ flex: COL.desc }}>Descripción</Text>
           <Text style={[{ width: COL.qty }, s.num]}>Cant.</Text>
           <Text style={[{ width: COL.price }, s.num]}>Precio</Text>
@@ -32,7 +32,7 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
         {invoice.lines.map((l, i) => (
           <View key={i} style={s.row} wrap={false}>
             <View style={{ flex: COL.desc, paddingRight: 6 }}>
-              <Text style={s.bold}>{l.description}</Text>
+              <LineDescription text={l.description} />
               {measures(l.widthMm, l.heightMm) ? <Text style={s.muted}>Medidas: {measures(l.widthMm, l.heightMm)}</Text> : null}
             </View>
             <Text style={[{ width: COL.qty }, s.num]}>{qty(l.quantity)}</Text>
@@ -62,6 +62,8 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
             {company.iban ? <Text style={s.bold}>IBAN: {company.iban}</Text> : null}
           </View>
         ) : null}
+
+        <GdprText company={company} />
 
         <Footer text={`${company.name} · NIF ${company.nif} · Factura ${invoice.number}`} />
       </Page>

@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { fillGdprText } from "../defaults";
 import { formatEuros } from "../money";
 import type { ClientSnapshot, CompanySettings, Totals } from "../types";
 
@@ -22,7 +23,7 @@ export const s = StyleSheet.create({
   totals: { marginTop: 10, marginLeft: "auto", width: 220 },
   totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 3 },
   grandTotal: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, paddingHorizontal: 6, marginTop: 4, backgroundColor: ACCENT, color: "#fff", fontFamily: "Helvetica-Bold", fontSize: 12 },
-  notes: { marginTop: 18, padding: 8, backgroundColor: "#f1f5f9", borderRadius: 4, lineHeight: 1.4 },
+  notes: { marginTop: 18, padding: 8, backgroundColor: "#f1f5f9", borderRadius: 4 },
   footer: { position: "absolute", bottom: 24, left: 36, right: 36, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: "#64748b" },
 });
 
@@ -115,4 +116,26 @@ export function measures(widthMm: number, heightMm: number): string {
 
 export function qty(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toLocaleString("es-ES", { maximumFractionDigits: 2 });
+}
+
+/** Texto RGPD en letra pequeña al final del documento. */
+export function GdprText({ company }: { company: CompanySettings }) {
+  const text = fillGdprText(company);
+  if (!text) return null;
+  return (
+    <View style={{ marginTop: 18, paddingTop: 6, borderTop: "0.5pt solid #e2e8f0" }}>
+      <Text style={{ fontSize: 6.5, lineHeight: 1.35, color: "#64748b" }}>{text}</Text>
+    </View>
+  );
+}
+
+/** Descripción de una línea: la primera línea en negrita y el resto normal, respetando los saltos. */
+export function LineDescription({ text }: { text: string }) {
+  const [first, ...rest] = (text || "").split("\n");
+  return (
+    <>
+      <Text style={s.bold}>{first}</Text>
+      {rest.length ? <Text>{rest.join("\n")}</Text> : null}
+    </>
+  );
 }

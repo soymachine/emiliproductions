@@ -3,9 +3,9 @@ import type { Drawing, DrawingParams, LeafType, Primitive } from "./types";
 /** Tamaño máximo (en unidades del dibujo) del hueco; el resto es margen para las cotas. */
 const BOX = 240;
 const PAD = 6;
-const DIM_RIGHT = 62;
-const DIM_BOTTOM = 46;
 const DIM_TEXT = 19;
+/** Texto de las cotas parciales (cada fijo y el hueco central). */
+const PART_TEXT = 15;
 const FRAME = 5;
 
 const STROKE_FRAME = 1.6;
@@ -21,6 +21,33 @@ interface Cell {
 }
 
 const fmt = (n: number) => String(Math.round(n));
+
+/** Cadena de cotas horizontal: marcas en cada x y la medida (mm) centrada en cada tramo. */
+function hDim(xs: number[], y: number, mm: number[], size: number): Primitive[] {
+  const out: Primitive[] = [{ t: "line", x1: xs[0], y1: y, x2: xs[xs.length - 1], y2: y, sw: STROKE_SYMBOL }];
+  for (const x of xs) out.push({ t: "line", x1: x, y1: y - 4, x2: x, y2: y + 4, sw: STROKE_SYMBOL });
+  mm.forEach((v, i) => {
+    const w = xs[i + 1] - xs[i];
+    const label = fmt(v);
+    // Si no cabe, letra más pequeña; si ni así, se omite.
+    const fit = Math.min(size, (w - 2) / (label.length * 0.58));
+    if (fit >= 8) out.push({ t: "text", x: (xs[i] + xs[i + 1]) / 2, y: y + fit + 3, text: label, size: Math.round(fit * 10) / 10, anchor: "middle" });
+  });
+  return out;
+}
+
+/** Cadena de cotas vertical: marcas en cada y y la medida (mm) a la derecha de cada tramo. */
+function vDim(ys: number[], x: number, mm: number[], size: number): Primitive[] {
+  const out: Primitive[] = [{ t: "line", x1: x, y1: ys[0], x2: x, y2: ys[ys.length - 1], sw: STROKE_SYMBOL }];
+  for (const y of ys) out.push({ t: "line", x1: x - 4, y1: y, x2: x + 4, y2: y, sw: STROKE_SYMBOL });
+  mm.forEach((v, i) => {
+    const h = ys[i + 1] - ys[i];
+    const label = fmt(v);
+    const fit = Math.min(size, h - 2, 46 / (label.length * 0.58));
+    if (fit >= 8) out.push({ t: "text", x: x + 5, y: (ys[i] + ys[i + 1]) / 2 + fit * 0.36, text: label, size: Math.round(fit * 10) / 10, anchor: "start" });
+  });
+  return out;
+}
 
 function arrow(x1: number, y: number, x2: number, sw: number): Primitive[] {
   const dir = x2 > x1 ? 1 : -1;
@@ -165,18 +192,31 @@ export function generateDrawing(p: DrawingParams, widthMm: number, heightMm: num
     items.push(...leafSymbol(c, isDoor));
   }
 
-  // Cotas: ancho (abajo) y alto (derecha), en mm.
-  const dy = oy + H + 16;
-  items.push({ t: "line", x1: ox, y1: dy, x2: ox + W, y2: dy, sw: STROKE_SYMBOL });
-  items.push({ t: "line", x1: ox, y1: dy - 4, x2: ox, y2: dy + 4, sw: STROKE_SYMBOL });
-  items.push({ t: "line", x1: ox + W, y1: dy - 4, x2: ox + W, y2: dy + 4, sw: STROKE_SYMBOL });
-  items.push({ t: "text", x: ox + W / 2, y: dy + 22, text: fmt(widthMm), size: DIM_TEXT, anchor: "middle" });
+  // Cotas en mm. Si hay fijos, primero una cadena con cada sección y, más afuera, la total.
+  const leftMm = clamp(p.sideLeftMm, wMm * 0.8);
+  const rightMm = clamp(p.sideRightMm, wMm * 0.8);
+  const topMm = clamp(p.topFixedMm, hMm * 0.8);
+  const botMm = clamp(p.bottomFixedMm, hMm * 0.8);
+  const hasH = leftMm > 0 || rightMm > 0;
+  const hasV = topMm > 0 || botMm > 0;
 
-  const dx = ox + W + 14;
-  items.push({ t: "line", x1: dx, y1: oy, x2: dx, y2: oy + H, sw: STROKE_SYMBOL });
-  items.push({ t: "line", x1: dx - 4, y1: oy, x2: dx + 4, y2: oy, sw: STROKE_SYMBOL });
-  items.push({ t: "line", x1: dx - 4, y1: oy + H, x2: dx + 4, y2: oy + H, sw: STROKE_SYMBOL });
-  items.push({ t: "text", x: dx + 6, y: oy + H / 2 + 7, text: fmt(heightMm), size: DIM_TEXT, anchor: "start" });
+  const dy1 = oy + H + 16;
+  const dy2 = hasH ? dy1 + 40 : dy1;
+  if (hasH) {
+    const xs = [ox, ...(leftMm > 0 ? [midX] : []), ...(rightMm > 0 ? [midX + midW] : []), ox + W];
+    const mm = [...(leftMm > 0 ? [leftMm] : []), (widthMm || 0) - leftMm - rightMm, ...(rightMm > 0 ? [rightMm] : [])];
+    items.push(...hDim(xs, dy1, mm, PART_TEXT));
+  }
+  items.push(...hDim([ox, ox + W], dy2, [widthMm], DIM_TEXT));
 
-  return { width: ox + W + DIM_RIGHT, height: oy + H + DIM_BOTTOM, items };
+  const dx1 = ox + W + 14;
+  const dx2 = hasV ? dx1 + 54 : dx1;
+  if (hasV) {
+    const ys = [oy, ...(topMm > 0 ? [midY] : []), ...(botMm > 0 ? [midY + midH] : []), oy + H];
+    const mm = [...(topMm > 0 ? [topMm] : []), (heightMm || 0) - topMm - botMm, ...(botMm > 0 ? [botMm] : [])];
+    items.push(...vDim(ys, dx1, mm, PART_TEXT));
+  }
+  items.push(...vDim([oy, oy + H], dx2, [heightMm], DIM_TEXT));
+
+  return { width: dx2 + 48, height: dy2 + 30, items };
 }

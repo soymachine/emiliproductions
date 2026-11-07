@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS: CompanySettings = {
   logoDataUrl: "",
   defaultVatRate: 21,
   quoteValidityDays: 30,
+  gdprText:
+    "En compliment del Reglament (UE) 2016/679 (RGPD) i de la Llei Orgànica 3/2018 (LOPDGDD), us informem que les vostres dades personals seran tractades per {EMPRESA} (NIF {NIF}) amb la finalitat de gestionar la relació comercial: pressupostos, facturació i prestació del servei. Les dades es conservaran durant el temps necessari per complir les obligacions legals i no se cediran a tercers, excepte per obligació legal. Podeu exercir els drets d'accés, rectificació, supressió, oposició, limitació i portabilitat adreçant-vos a {EMAIL}.",
   quoteNotesTemplate: [
     "Pressupost vàlid per {DIES} dies",
     "Forma de pagament: 50% a l'acceptació del pressupost - Resta a la finalització de la feina amb la presentació de la factura",
@@ -74,4 +76,13 @@ export function fillQuoteNotes(s: Pick<CompanySettings, "quoteNotesTemplate" | "
   return (s.quoteNotesTemplate ?? "")
     .replace(/\{DIES\}|\{DIAS\}|\{DÍAS\}/gi, String(s.quoteValidityDays || 30))
     .replace(/\{IBAN\}/gi, s.iban?.trim() || "ESXX XXXX XXXX XXXX XXXX XXXX");
+}
+
+/** Rellena el texto RGPD con los datos de la empresa ({EMPRESA}, {NIF}, {EMAIL}). */
+export function fillGdprText(s: Pick<CompanySettings, "gdprText" | "name" | "nif" | "email">): string {
+  return (s.gdprText ?? "")
+    .replace(/\{EMPRESA\}/gi, s.name || "")
+    .replace(/\{NIF\}/gi, s.nif || "")
+    .replace(/\{EMAIL\}/gi, s.email || "")
+    .trim();
 }

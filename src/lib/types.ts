@@ -22,6 +22,8 @@ export interface CompanySettings {
    * {DIES} = días de validez · {IBAN} = cuenta bancaria.
    */
   quoteNotesTemplate: string;
+  /** Texto legal de protección de datos (RGPD), en pequeño al final de presupuestos y facturas. */
+  gdprText: string;
   /** Plantilla del número de presupuesto, p. ej. "P-{AAAA}-{NNN}". */
   quoteNumberFormat: string;
   /** Plantilla del número de factura, p. ej. "F-{AAAA}-{NNN}". */

@@ -6,7 +6,7 @@ import { DrawingSvg } from "@/lib/drawings/DrawingSvg";
 import { centsToInput, formatEuros, lineTotalCents, parseEurosToCents } from "@/lib/money";
 import type { QuoteLine } from "@/lib/types";
 import { DrawingEditor } from "./DrawingEditor";
-import { Button, Card, Field, Input, Modal } from "./ui";
+import { Button, Card, Field, Input, Modal, Textarea } from "./ui";
 
 const btn =
   "inline-flex items-center gap-1.5 rounded-md px-2.5 py-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-30 [&_svg]:size-4";
@@ -58,7 +58,13 @@ export function QuoteLineCard({
           <div className="flex items-start gap-2">
             <span className="mt-8 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">{index + 1}</span>
             <Field label="Descripción" className="flex-1">
-              <Input value={line.description} onChange={(e) => set({ description: e.target.value })} disabled={readOnly} />
+              <Textarea
+                value={line.description}
+                onChange={(e) => set({ description: e.target.value })}
+                disabled={readOnly}
+                rows={Math.min(6, Math.max(2, line.description.split("\n").length))}
+                className="leading-snug"
+              />
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -142,7 +148,7 @@ export function QuoteLineCard({
         </div>
       ) : null}
       {zoom ? (
-        <Modal title={line.description || "Dibujo"} onClose={() => setZoom(false)} wide>
+        <Modal title={line.description.split("\n")[0] || "Dibujo"} onClose={() => setZoom(false)} wide>
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-center rounded-lg border bg-white p-4">
               <DrawingSvg params={line.drawing} widthMm={line.widthMm} heightMm={line.heightMm} className="h-[60vh] w-full text-slate-900" />

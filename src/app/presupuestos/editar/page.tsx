@@ -151,12 +151,12 @@ function QuoteEditor({
     }
   }
 
-  async function pdf() {
-    await run("pdf", async () => {
+  async function pdf(layout: "compact" | "large") {
+    await run(`pdf-${layout}`, async () => {
       const id = readOnly ? q.id! : await save();
       if (!id) return;
       const fresh = (await getQuote(id)) as Quote;
-      await downloadQuotePdf(fresh, settings);
+      await downloadQuotePdf(fresh, settings, layout);
     });
   }
 
@@ -309,10 +309,16 @@ function QuoteEditor({
               )}
             </Button>
           ) : null}
-          <Button variant="secondary" onClick={pdf} disabled={busy !== null || q.lines.length === 0}>
-            <Download />
-            {busy === "pdf" ? "Generando PDF…" : "Descargar PDF"}
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" onClick={() => pdf("compact")} disabled={busy !== null || q.lines.length === 0} className="px-3">
+              <Download />
+              {busy === "pdf-compact" ? "Generando…" : "PDF dibujos pequeños"}
+            </Button>
+            <Button variant="secondary" onClick={() => pdf("large")} disabled={busy !== null || q.lines.length === 0} className="px-3">
+              <Download />
+              {busy === "pdf-large" ? "Generando…" : "PDF dibujos grandes"}
+            </Button>
+          </div>
           {!readOnly ? (
             <Button variant="secondary" onClick={() => setConverting(true)} disabled={busy !== null || q.lines.length === 0 || !q.clientId}>
               <Receipt />

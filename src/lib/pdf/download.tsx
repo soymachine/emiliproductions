@@ -25,10 +25,11 @@ function saveBlob(blob: Blob, filename: string) {
 
 // La librería de PDF se carga solo cuando hace falta, para que la app arranque rápido.
 
-export async function downloadQuotePdf(quote: Quote, company: CompanySettings) {
+export async function downloadQuotePdf(quote: Quote, company: CompanySettings, layout: "compact" | "large" = "compact") {
   const [{ pdf }, { QuotePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./QuotePdf")]);
-  const blob = await pdf(<QuotePdf quote={quote} company={company} />).toBlob();
-  saveBlob(blob, `Presupuesto ${quote.number} ${safeName(quote.client.name)}.pdf`);
+  const blob = await pdf(<QuotePdf quote={quote} company={company} layout={layout} />).toBlob();
+  const suffix = layout === "large" ? " (dibujos grandes)" : "";
+  saveBlob(blob, `Presupuesto ${quote.number} ${safeName(quote.client.name)}${suffix}.pdf`);
 }
 
 export async function downloadInvoicePdf(invoice: Invoice, company: CompanySettings) {

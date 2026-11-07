@@ -188,6 +188,13 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
             <Field label="Forma de pago / pie de factura" className="sm:col-span-2">
               <Textarea value={s.invoiceFooter} onChange={(e) => set("invoiceFooter", e.target.value)} />
             </Field>
+            <Field
+              label="Texto RGPD (protección de datos)"
+              className="sm:col-span-2"
+              hint="Sale en letra pequeña al final de presupuestos y facturas. {EMPRESA}, {NIF} y {EMAIL} se rellenan con tus datos. Déjalo vacío para no mostrarlo."
+            >
+              <Textarea rows={5} value={s.gdprText} onChange={(e) => set("gdprText", e.target.value)} className="text-sm" />
+            </Field>
           </div>
         </Card>
 

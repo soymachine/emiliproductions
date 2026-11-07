@@ -73,6 +73,17 @@ describe("dibujos", () => {
     expect(texts).toContain("1200");
   });
 
+  it("acota cada fijo y el hueco central además del total", () => {
+    const texts = (d: ReturnType<typeof generateDrawing>) => d!.items.filter((i) => i.t === "text").map((i) => (i as { text: string }).text);
+    const lados = texts(generateDrawing(drawing("ventana", ["corredera-dcha", "corredera-izq"], { sideLeftMm: 500, sideRightMm: 500 }), 2500, 1200));
+    expect(lados).toEqual(expect.arrayContaining(["500", "1500", "2500", "1200"]));
+    expect(lados.filter((t) => t === "500")).toHaveLength(2);
+    const sup = texts(generateDrawing(drawing("puerta", ["izq"], { topFixedMm: 400 }), 900, 2500));
+    expect(sup).toEqual(expect.arrayContaining(["400", "2100", "2500", "900"]));
+    const sin = texts(generateDrawing(drawing("ventana", ["izq", "dcha"]), 1200, 1000)).filter((t) => /^\d+$/.test(t));
+    expect(sin.sort()).toEqual(["1000", "1200"]);
+  });
+
   it("respeta la proporción de las medidas", () => {
     const d = generateDrawing(drawing("ventana", ["fijo"]), 2000, 1000)!;
     const frame = d.items[0] as { w: number; h: number };
