@@ -6,7 +6,7 @@
  *   3. Publica con `npm run deploy`.
  * Cualquier otra cuenta con acceso (las de isOwner() en firestore.rules) tiene acceso completo.
  */
-export const VIEWER_EMAILS: string[] = [];
+export const VIEWER_EMAILS: string[] = ["emiliomateotorreblanca@gmail.com"];
 
 export function isViewerEmail(email: string | null | undefined): boolean {
   return Boolean(email) && VIEWER_EMAILS.includes(email!.trim().toLowerCase());

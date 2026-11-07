@@ -292,3 +292,12 @@ describe("color del marco", () => {
     expect(frameColorLabel(undefined)).toBe("");
   });
 });
+
+describe("errores de carga tras publicar", () => {
+  it("reconoce los errores de trozos de la app que ya no existen", async () => {
+    const { isChunkLoadError } = await import("./chunks");
+    expect(isChunkLoadError(new Error("Failed to load chunk /_next/static/chunks/42ap2gusja6ce.js from module 26316"))).toBe(true);
+    expect(isChunkLoadError(new TypeError("Importing a module script failed."))).toBe(true);
+    expect(isChunkLoadError(new Error("El cobro es mayor que lo pendiente"))).toBe(false);
+  });
+});

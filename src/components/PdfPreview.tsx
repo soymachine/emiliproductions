@@ -3,6 +3,7 @@
 import { Download, ExternalLink, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { saveBlob, type BuiltPdf } from "@/lib/pdf/download";
+import { loadChunk } from "@/lib/chunks";
 import { Button, ErrorBox, Modal } from "./ui";
 
 /**
@@ -19,8 +20,9 @@ function PdfPages({ blob }: { blob: Blob }) {
     if (!container) return;
     (async () => {
       try {
-        const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+        // Versión «legacy» de pdf.js: compatible con Safari de iPad/iPhone algo más antiguos.
+        const pdfjs = await loadChunk(() => import("pdfjs-dist/legacy/build/pdf.mjs"));
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url).toString();
         const doc = await pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
         container.replaceChildren();
         const width = container.clientWidth || 800;

@@ -1,5 +1,6 @@
 "use client";
 
+import { loadChunk } from "../chunks";
 import type { CompanySettings, Invoice, Quote } from "../types";
 
 function safeName(s: string) {
@@ -31,14 +32,14 @@ export interface BuiltPdf {
 // La librería de PDF se carga solo cuando hace falta, para que la app arranque rápido.
 
 export async function buildQuotePdf(quote: Quote, company: CompanySettings, layout: "compact" | "large" = "compact"): Promise<BuiltPdf> {
-  const [{ pdf }, { QuotePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./QuotePdf")]);
+  const [{ pdf }, { QuotePdf }] = await loadChunk(() => Promise.all([import("@react-pdf/renderer"), import("./QuotePdf")]));
   const blob = await pdf(<QuotePdf quote={quote} company={company} layout={layout} />).toBlob();
   const suffix = layout === "large" ? " (dibujos grandes)" : "";
   return { blob, filename: `Presupuesto ${quote.number} ${safeName(quote.client.name)}${suffix}.pdf` };
 }
 
 export async function buildInvoicePdf(invoice: Invoice, company: CompanySettings): Promise<BuiltPdf> {
-  const [{ pdf }, { InvoicePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./InvoicePdf")]);
+  const [{ pdf }, { InvoicePdf }] = await loadChunk(() => Promise.all([import("@react-pdf/renderer"), import("./InvoicePdf")]));
   const blob = await pdf(<InvoicePdf invoice={invoice} company={company} />).toBlob();
   return { blob, filename: `Factura ${invoice.number} ${safeName(invoice.client.name)}.pdf` };
 }
