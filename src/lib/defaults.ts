@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: CompanySettings = {
   defaultVatRate: 21,
   quoteValidityDays: 30,
   gdprText:
-    "En compliment del Reglament (UE) 2016/679 (RGPD) i de la Llei Orgànica 3/2018 (LOPDGDD), us informem que les vostres dades personals seran tractades per {EMPRESA} (NIF {NIF}) amb la finalitat de gestionar la relació comercial: pressupostos, facturació i prestació del servei. Les dades es conservaran durant el temps necessari per complir les obligacions legals i no se cediran a tercers, excepte per obligació legal. Podeu exercir els drets d'accés, rectificació, supressió, oposició, limitació i portabilitat adreçant-vos a {EMAIL}.",
+    "En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y de la Ley Orgánica 3/2018 (LOPDGDD), le informamos de que sus datos personales serán tratados por {EMPRESA} (NIF {NIF}) con la finalidad de gestionar la relación comercial: presupuestos, facturación y prestación del servicio. Los datos se conservarán durante el tiempo necesario para cumplir con las obligaciones legales y no se cederán a terceros, salvo por obligación legal. Puede ejercer los derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad dirigiéndose a {EMAIL}.",
   quoteNotesTemplate: [
     "Pressupost vàlid per {DIES} dies",
     "Forma de pagament: 50% a l'acceptació del pressupost - Resta a la finalització de la feina amb la presentació de la factura",
