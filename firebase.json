@@ -19,7 +19,7 @@
         ]
       },
       {
-        "regex": "^/(?!_next/static/).*",
+        "regex": "^/([^_].*)?$",
         "headers": [
           {
             "key": "Cache-Control",
