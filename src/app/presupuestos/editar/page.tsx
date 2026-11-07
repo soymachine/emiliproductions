@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { ClientPicker } from "@/components/ClientPicker";
 import { QuoteLineCard } from "@/components/QuoteLineCard";
-import { Badge, Button, Card, Empty, ErrorBox, Field, Input, Loading, Modal, PageHeader, Select, Textarea } from "@/components/ui";
+import { Copy, Download, FilePlus2, Plus, Receipt, Save, Check, Trash2 } from "lucide-react";
+import { Badge, Button, Card, CardTitle, Empty, ErrorBox, Field, Input, Loading, Modal, PageHeader, Select, Textarea } from "@/components/ui";
 import { CATEGORY_LABELS } from "@/lib/defaults";
 import {
   clientSnapshot,
@@ -179,7 +180,7 @@ function QuoteEditor({
       />
       <ErrorBox error={error} />
       {readOnly ? (
-        <div className="mb-4 rounded-xl border border-purple-200 bg-purple-50 p-4 text-purple-900">
+        <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50 p-4 text-violet-900">
           Este presupuesto ya está facturado y no se puede modificar.{" "}
           <Link className="font-semibold underline" href={`/facturas/ver/?id=${initial.invoiceId}`}>
             Ver factura
@@ -190,7 +191,7 @@ function QuoteEditor({
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-4">
           <Card>
-            <h2 className="mb-3 text-xl font-bold">Cliente</h2>
+            <CardTitle>Cliente</CardTitle>
             <ClientPicker
               clients={clients}
               selectedId={q.clientId}
@@ -203,8 +204,11 @@ function QuoteEditor({
             />
           </Card>
 
-          <h2 className="mt-2 text-xl font-bold">Artículos</h2>
-          {q.lines.length === 0 ? <Empty>Añade el primer artículo al presupuesto.</Empty> : null}
+          <div className="mt-2 flex items-baseline justify-between">
+            <h2 className="text-lg font-semibold tracking-tight">Artículos</h2>
+            {q.lines.length ? <span className="text-sm text-muted-foreground">{q.lines.length} {q.lines.length === 1 ? "línea" : "líneas"}</span> : null}
+          </div>
+          {q.lines.length === 0 ? <Empty icon={<FilePlus2 />}>Añade el primer artículo al presupuesto.</Empty> : null}
           {q.lines.map((line, i) => (
             <QuoteLineCard
               key={line.id}
@@ -226,8 +230,9 @@ function QuoteEditor({
             />
           ))}
           {!readOnly ? (
-            <Button variant="secondary" className="min-h-16 border-2 border-dashed text-lg" onClick={() => setPicking(true)}>
-              ＋ Añadir artículo
+            <Button variant="outline" size="lg" className="min-h-16 bg-card/60" onClick={() => setPicking(true)}>
+              <Plus />
+              Añadir artículo
             </Button>
           ) : null}
 
@@ -238,7 +243,7 @@ function QuoteEditor({
           </Card>
         </div>
 
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-8 lg:self-start">
           <Card className="flex flex-col gap-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <Field label="Fecha">
@@ -249,31 +254,40 @@ function QuoteEditor({
               </Field>
             </div>
             <Field label="IVA">
-              <Select value={q.vatRate} onChange={(e) => update({ vatRate: Number(e.target.value) as VatRate })} disabled={readOnly}>
-                <option value={21}>21% (general)</option>
-                <option value={10}>10% (reforma de vivienda)</option>
-              </Select>
+              <Select
+                value={String(q.vatRate)}
+                onValueChange={(v) => update({ vatRate: Number(v) as VatRate })}
+                disabled={readOnly}
+                options={[
+                  { value: "21", label: "21% (general)" },
+                  { value: "10", label: "10% (reforma de vivienda)" },
+                ]}
+              />
             </Field>
             {!readOnly ? (
               <Field label="Estado">
-                <Select value={q.status} onChange={(e) => update({ status: e.target.value as QuoteStatus })}>
-                  <option value="borrador">Borrador</option>
-                  <option value="enviado">Enviado</option>
-                  <option value="aceptado">Aceptado</option>
-                  <option value="rechazado">Rechazado</option>
-                </Select>
+                <Select
+                  value={q.status}
+                  onValueChange={(v) => update({ status: v as QuoteStatus })}
+                  options={[
+                    { value: "borrador", label: "Borrador" },
+                    { value: "enviado", label: "Enviado" },
+                    { value: "aceptado", label: "Aceptado" },
+                    { value: "rechazado", label: "Rechazado" },
+                  ]}
+                />
               </Field>
             ) : null}
-            <dl className="mt-2 flex flex-col gap-1 border-t border-slate-200 pt-3">
+            <dl className="tabular mt-2 flex flex-col gap-1.5 rounded-lg bg-muted/60 p-4">
               <div className="flex justify-between">
-                <dt className="text-slate-600">Base imponible</dt>
+                <dt className="text-muted-foreground">Base imponible</dt>
                 <dd>{formatEuros(totals.subtotalCents)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-slate-600">IVA {q.vatRate}%</dt>
+                <dt className="text-muted-foreground">IVA {q.vatRate}%</dt>
                 <dd>{formatEuros(totals.vatCents)}</dd>
               </div>
-              <div className="flex justify-between text-2xl font-bold text-brand-700">
+              <div className="mt-1 flex justify-between border-t pt-2 text-2xl font-bold text-primary">
                 <dt>Total</dt>
                 <dd>{formatEuros(totals.totalCents)}</dd>
               </div>
@@ -282,19 +296,32 @@ function QuoteEditor({
 
           {!readOnly ? (
             <Button onClick={() => run("save", async () => void (await save()))} disabled={busy !== null}>
-              {busy === "save" ? "Guardando…" : dirty || !q.id ? "💾 Guardar" : "✓ Guardado"}
+              {busy === "save" ? (
+                "Guardando…"
+              ) : dirty || !q.id ? (
+                <>
+                  <Save /> Guardar
+                </>
+              ) : (
+                <>
+                  <Check /> Guardado
+                </>
+              )}
             </Button>
           ) : null}
           <Button variant="secondary" onClick={pdf} disabled={busy !== null || q.lines.length === 0}>
-            {busy === "pdf" ? "Generando PDF…" : "📄 Descargar PDF"}
+            <Download />
+            {busy === "pdf" ? "Generando PDF…" : "Descargar PDF"}
           </Button>
           {!readOnly ? (
             <Button variant="secondary" onClick={() => setConverting(true)} disabled={busy !== null || q.lines.length === 0 || !q.clientId}>
-              💶 Convertir en factura
+              <Receipt />
+              Convertir en factura
             </Button>
           ) : null}
           {q.id ? (
             <Button variant="ghost" onClick={() => router.push(`/presupuestos/editar/?duplicar=${q.id}`)}>
+              <Copy />
               Duplicar presupuesto
             </Button>
           ) : null}
@@ -309,6 +336,7 @@ function QuoteEditor({
                 })
               }
             >
+              <Trash2 />
               Borrar presupuesto
             </Button>
           ) : null}
@@ -328,13 +356,13 @@ function QuoteEditor({
 
       {converting ? (
         <Modal title="Convertir en factura" onClose={() => setConverting(false)}>
-          <p className="mb-4 text-slate-600">
+          <p className="mb-4 text-muted-foreground">
             Se creará una factura con el siguiente número correlativo, con los mismos datos y artículos (sin dibujos). Después el presupuesto ya no se podrá modificar.
           </p>
           <Field label="Fecha de la factura" className="mb-4">
             <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
           </Field>
-          <p className="mb-4 text-xl font-bold">Total: {formatEuros(totals.totalCents)}</p>
+          <p className="tabular mb-4 text-xl font-bold">Total: {formatEuros(totals.totalCents)}</p>
           <Button onClick={convert} disabled={busy !== null}>
             {busy === "convert" ? "Creando factura…" : "Crear factura"}
           </Button>
@@ -353,17 +381,17 @@ function ArticlePicker({ articles, onPick, onClose }: { articles: ArticleType[];
         if (!items.length) return null;
         return (
           <section key={cat} className="mb-6">
-            <h3 className="mb-2 text-lg font-bold text-slate-700">{CATEGORY_LABELS[cat]}</h3>
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{CATEGORY_LABELS[cat]}</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {items.map((a) => (
                 <button
                   key={a.id}
                   type="button"
                   onClick={() => onPick(a)}
-                  className="flex flex-col items-center rounded-xl border border-slate-200 p-3 text-center hover:border-brand-500 hover:bg-brand-50"
+                  className="flex flex-col items-center rounded-lg border bg-card p-3 text-center transition hover:border-primary hover:bg-accent"
                 >
                   <DrawingSvg params={a.drawing} widthMm={a.defaultWidthMm} heightMm={a.defaultHeightMm} className="mb-2 h-24 w-full text-slate-800" />
-                  <span className="font-semibold leading-tight">{a.name}</span>
+                  <span className="text-sm font-medium leading-tight">{a.name}</span>
                 </button>
               ))}
             </div>

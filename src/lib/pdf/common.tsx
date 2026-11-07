@@ -2,7 +2,7 @@ import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formatEuros } from "../money";
 import type { ClientSnapshot, CompanySettings, Totals } from "../types";
 
-export const ACCENT = "#1e3a5f";
+export const ACCENT = "#1e3a8a";
 
 export const s = StyleSheet.create({
   page: { padding: 36, paddingBottom: 56, fontSize: 9.5, fontFamily: "Helvetica", color: "#111" },

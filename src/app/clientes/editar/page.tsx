@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { FilePlus2, Trash2 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { ClientForm, EMPTY_CLIENT } from "@/components/ClientForm";
-import { Badge, Button, Card, ErrorBox, LinkButton, Loading, PageHeader } from "@/components/ui";
+import { Badge, Button, Card, CardTitle, ErrorBox, LinkButton, Loading, Notice, PageHeader } from "@/components/ui";
 import { deleteClient, getClient, listDocsByClient, saveClient } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
 import { formatEuros } from "@/lib/money";
@@ -38,10 +39,17 @@ function EditClient() {
       <PageHeader
         title={client ? client.name : "Nuevo cliente"}
         back={{ href: "/clientes/", label: "Clientes" }}
-        actions={client ? <LinkButton href={`/presupuestos/editar/?cliente=${client.id}`}>＋ Presupuesto para este cliente</LinkButton> : null}
+        actions={
+          client ? (
+            <LinkButton href={`/presupuestos/editar/?cliente=${client.id}`}>
+              <FilePlus2 />
+              Nuevo presupuesto
+            </LinkButton>
+          ) : null
+        }
       />
       <ErrorBox error={error} />
-      {saved ? <p className="mb-4 rounded-xl bg-green-50 p-4 text-green-800">Cliente guardado.</p> : null}
+      {saved ? <Notice>Cliente guardado.</Notice> : null}
       <Card>
         <ClientForm
           key={client?.id ?? "new"}
@@ -61,32 +69,32 @@ function EditClient() {
 
       {client && data ? (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <Card>
-            <h2 className="mb-3 text-xl font-bold">Presupuestos</h2>
-            {data.docs.quotes.length === 0 ? <p className="text-slate-500">Sin presupuestos.</p> : null}
-            <ul className="divide-y divide-slate-100">
+          <Card className="pb-0 sm:pb-0">
+            <CardTitle>Presupuestos</CardTitle>
+            {data.docs.quotes.length === 0 ? <p className="text-muted-foreground">Sin presupuestos.</p> : null}
+            <ul className="-mx-5 divide-y border-t sm:-mx-6">
               {data.docs.quotes.map((q) => (
                 <li key={q.id}>
-                  <Link href={`/presupuestos/editar/?id=${q.id}`} className="flex items-center gap-3 py-3 hover:bg-slate-50">
+                  <Link href={`/presupuestos/editar/?id=${q.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/60 sm:px-6">
                     <span className="font-mono text-sm">{q.number}</span>
-                    <span className="flex-1 text-slate-500">{formatDate(q.date)}</span>
-                    <span>{formatEuros(q.totalCents)}</span>
+                    <span className="flex-1 text-muted-foreground">{formatDate(q.date)}</span>
+                    <span className="tabular">{formatEuros(q.totalCents)}</span>
                     <Badge status={q.status} />
                   </Link>
                 </li>
               ))}
             </ul>
           </Card>
-          <Card>
-            <h2 className="mb-3 text-xl font-bold">Facturas</h2>
-            {data.docs.invoices.length === 0 ? <p className="text-slate-500">Sin facturas.</p> : null}
-            <ul className="divide-y divide-slate-100">
+          <Card className="pb-0 sm:pb-0">
+            <CardTitle>Facturas</CardTitle>
+            {data.docs.invoices.length === 0 ? <p className="text-muted-foreground">Sin facturas.</p> : null}
+            <ul className="-mx-5 divide-y border-t sm:-mx-6">
               {data.docs.invoices.map((i) => (
                 <li key={i.id}>
-                  <Link href={`/facturas/ver/?id=${i.id}`} className="flex items-center gap-3 py-3 hover:bg-slate-50">
+                  <Link href={`/facturas/ver/?id=${i.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/60 sm:px-6">
                     <span className="font-mono text-sm">{i.number}</span>
-                    <span className="flex-1 text-slate-500">{formatDate(i.date)}</span>
-                    <span>{formatEuros(i.totalCents)}</span>
+                    <span className="flex-1 text-muted-foreground">{formatDate(i.date)}</span>
+                    <span className="tabular">{formatEuros(i.totalCents)}</span>
                     <Badge status={i.status} />
                   </Link>
                 </li>
@@ -106,6 +114,7 @@ function EditClient() {
                 }
               }}
             >
+              <Trash2 />
               Borrar cliente
             </Button>
           </div>

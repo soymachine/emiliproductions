@@ -1,11 +1,15 @@
 "use client";
 
 import Papa from "papaparse";
+import { FileSpreadsheet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Button, Card, ErrorBox, Field, PageHeader, Select } from "@/components/ui";
+import { Button, Card, CardTitle, ErrorBox, Field, PageHeader, Select } from "@/components/ui";
 import { importClients, listClients } from "@/lib/db";
 import { decodeText, guessMapping, IMPORT_FIELDS, normalizeNif, rowsToClients, type Mapping } from "@/lib/import/clients";
+
+// Radix Select no admite valores vacíos.
+const NONE = "__ninguna__";
 
 export default function ImportClientsPage() {
   const router = useRouter();
@@ -76,10 +80,11 @@ export default function ImportClientsPage() {
       <PageHeader title="Importar clientes" back={{ href: "/clientes/", label: "Clientes" }} />
       <ErrorBox error={error} />
       <Card className="mb-6">
-        <p className="mb-4 text-slate-600">
+        <p className="mb-4 text-muted-foreground">
           Exporta los clientes desde InGnio a <strong>CSV</strong> o <strong>Excel (.xlsx)</strong> y súbelo aquí. La primera fila debe tener los nombres de las columnas.
         </p>
-        <label className="inline-flex min-h-12 cursor-pointer items-center rounded-xl bg-brand-600 px-5 font-semibold text-white hover:bg-brand-700">
+        <label className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-lg bg-primary px-5 font-semibold text-white hover:bg-primary/90">
+          <FileSpreadsheet className="size-5" />
           Elegir fichero…
           <input
             type="file"
@@ -91,44 +96,41 @@ export default function ImportClientsPage() {
             }}
           />
         </label>
-        {fileName ? <span className="ml-3 text-slate-600">{fileName}</span> : null}
+        {fileName ? <span className="ml-3 text-muted-foreground">{fileName}</span> : null}
       </Card>
 
       {headers.length > 0 ? (
         <>
           <Card className="mb-6">
-            <h2 className="mb-4 text-xl font-bold">1. ¿Qué columna es cada dato?</h2>
+            <CardTitle description="La app lo ha intentado adivinar por el nombre de las columnas. Corrige lo que no cuadre.">1. ¿Qué columna es cada dato?</CardTitle>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {IMPORT_FIELDS.map((f) => (
                 <Field key={f.key} label={f.label}>
                   <Select
-                    value={mapping[f.key] ?? ""}
-                    onChange={(e) => setMapping((m) => ({ ...m, [f.key]: e.target.value === "" ? undefined : Number(e.target.value) }))}
-                  >
-                    <option value="">— No importar —</option>
-                    {headers.map((h, i) => (
-                      <option key={i} value={i}>
-                        {h || `Columna ${i + 1}`}
-                      </option>
-                    ))}
-                  </Select>
+                    value={mapping[f.key] === undefined ? NONE : String(mapping[f.key])}
+                    onValueChange={(v) => setMapping((m) => ({ ...m, [f.key]: v === NONE ? undefined : Number(v) }))}
+                    options={[
+                      { value: NONE, label: "— No importar —" },
+                      ...headers.map((h, i) => ({ value: String(i), label: h || `Columna ${i + 1}` })),
+                    ]}
+                  />
                 </Field>
               ))}
             </div>
           </Card>
 
           <Card className="mb-6">
-            <h2 className="mb-2 text-xl font-bold">2. Revisa</h2>
+            <CardTitle>2. Revisa</CardTitle>
             <label className="mb-4 flex items-center gap-3">
               <input type="checkbox" className="h-6 w-6" checked={skipDuplicates} onChange={(e) => setSkipDuplicates(e.target.checked)} />
               Saltar clientes con un NIF que ya existe
             </label>
-            <p className="mb-3 text-slate-600">
+            <p className="mb-3 text-muted-foreground">
               Se importarán <strong>{toImport.length}</strong> de {clients.length} clientes.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="text-slate-500">
+                <thead className="text-muted-foreground">
                   <tr>
                     <th className="p-2">Nombre</th>
                     <th className="p-2">NIF</th>
@@ -140,7 +142,7 @@ export default function ImportClientsPage() {
                 </thead>
                 <tbody>
                   {toImport.slice(0, 10).map((c, i) => (
-                    <tr key={i} className="border-t border-slate-100">
+                    <tr key={i} className="border-t">
                       <td className="p-2 font-semibold">{c.name}</td>
                       <td className="p-2">{c.nif}</td>
                       <td className="p-2">{c.address}</td>
@@ -151,7 +153,7 @@ export default function ImportClientsPage() {
                   ))}
                 </tbody>
               </table>
-              {toImport.length > 10 ? <p className="mt-2 text-sm text-slate-500">… y {toImport.length - 10} más</p> : null}
+              {toImport.length > 10 ? <p className="mt-2 text-sm text-muted-foreground">… y {toImport.length - 10} más</p> : null}
             </div>
           </Card>
 

@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { Building2, Mail, MapPin, Phone, Plus, Search, Upload, User, Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Card, Empty, ErrorBox, Input, LinkButton, Loading, PageHeader } from "@/components/ui";
+import { Empty, ErrorBox, Input, LinkButton, ListCard, ListRow, Loading, PageHeader } from "@/components/ui";
 import { listClients } from "@/lib/db";
-import { useAsync } from "@/lib/useAsync";
 import { matchesClient } from "@/lib/search";
+import { useAsync } from "@/lib/useAsync";
 
 export default function ClientsPage() {
   const { data, error, loading } = useAsync(listClients);
@@ -16,41 +16,65 @@ export default function ClientsPage() {
     <>
       <PageHeader
         title="Clientes"
+        description={data ? `${data.length} clientes` : undefined}
         actions={
           <>
             <LinkButton href="/clientes/importar/" variant="secondary">
+              <Upload />
               Importar
             </LinkButton>
-            <LinkButton href="/clientes/editar/">＋ Nuevo cliente</LinkButton>
+            <LinkButton href="/clientes/editar/">
+              <Plus />
+              Nuevo cliente
+            </LinkButton>
           </>
         }
       />
-      <Input placeholder="🔍 Buscar por nombre, NIF, población, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} className="mb-4" />
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Buscar por nombre, NIF, población, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-12" />
+      </div>
       <ErrorBox error={error} />
       {loading ? (
         <Loading />
       ) : filtered.length === 0 ? (
-        <Empty>{data?.length ? "Ningún cliente coincide con la búsqueda." : "Aún no hay clientes. Crea uno o impórtalos desde InGnio."}</Empty>
+        <Empty icon={<Users />}>{data?.length ? "Ningún cliente coincide con la búsqueda." : "Aún no hay clientes. Crea uno o impórtalos desde InGnio."}</Empty>
       ) : (
-        <Card className="p-0">
-          <ul className="divide-y divide-slate-100">
-            {filtered.map((c) => (
-              <li key={c.id}>
-                <Link href={`/clientes/editar/?id=${c.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4 hover:bg-slate-50">
-                  <span className="min-w-0 flex-1 font-semibold">
-                    {c.name}
-                    {c.kind === "empresa" ? <span className="ml-2 text-xs font-normal text-slate-500">Empresa</span> : null}
-                  </span>
-                  <span className="w-32 text-slate-500">{c.nif}</span>
-                  <span className="w-40 text-slate-500">{c.city}</span>
-                  <span className="w-36 text-slate-500">{c.phone}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <ListCard>
+          {filtered.map((c) => (
+            <ListRow key={c.id} href={`/clientes/editar/?id=${c.id}`}>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-slate-500">
+                {c.kind === "empresa" ? <Building2 className="size-5" /> : <User className="size-5" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{c.name}</span>
+                <span className="flex flex-wrap gap-x-4 text-sm text-muted-foreground">
+                  {c.nif ? <span>{c.nif}</span> : null}
+                  {c.city ? (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-3.5" />
+                      {c.city}
+                    </span>
+                  ) : null}
+                  {c.phone ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="size-3.5" />
+                      {c.phone}
+                    </span>
+                  ) : null}
+                  {c.email ? (
+                    <span className="hidden items-center gap-1 lg:inline-flex">
+                      <Mail className="size-3.5" />
+                      {c.email}
+                    </span>
+                  ) : null}
+                </span>
+              </span>
+            </ListRow>
+          ))}
+        </ListCard>
       )}
-      <p className="mt-3 text-sm text-slate-500">{data ? `${filtered.length} de ${data.length} clientes` : ""}</p>
+      {data && q ? <p className="mt-3 text-sm text-muted-foreground">{`${filtered.length} de ${data.length} clientes`}</p> : null}
     </>
   );
 }

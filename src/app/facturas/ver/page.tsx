@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { CircleCheck, Download, Undo2 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Badge, Button, Card, ErrorBox, Field, Input, Loading, PageHeader } from "@/components/ui";
 import { getInvoice, getSettings, setInvoicePaid } from "@/lib/db";
@@ -54,88 +55,113 @@ function InvoiceView() {
           <Card>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-sm font-semibold text-slate-500">Cliente</p>
-                <p className="text-lg font-bold">{inv.client.name}</p>
-                <p className="text-slate-600">{inv.client.nif}</p>
-                <p className="text-slate-600">
+                <p className="text-sm font-medium text-muted-foreground">Cliente</p>
+                <p className="text-lg font-semibold">{inv.client.name}</p>
+                <p className="text-muted-foreground">{inv.client.nif}</p>
+                <p className="text-muted-foreground">
                   {inv.client.address} {inv.client.postalCode} {inv.client.city}
                 </p>
               </div>
-              <div className="sm:text-right">
-                <p>
-                  <span className="text-slate-500">Fecha:</span> <strong>{formatDate(inv.date)}</strong>
-                </p>
-                <p>
-                  <span className="text-slate-500">Presupuesto:</span>{" "}
-                  <Link className="font-semibold text-brand-600 underline" href={`/presupuestos/editar/?id=${inv.quoteId}`}>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 self-start sm:justify-self-end">
+                <dt className="text-muted-foreground">Fecha</dt>
+                <dd className="font-medium">{formatDate(inv.date)}</dd>
+                <dt className="text-muted-foreground">Presupuesto</dt>
+                <dd>
+                  <Link className="font-medium text-primary hover:underline" href={`/presupuestos/editar/?id=${inv.quoteId}`}>
                     {inv.quoteNumber}
                   </Link>
-                </p>
+                </dd>
                 {inv.paidAt ? (
-                  <p>
-                    <span className="text-slate-500">Pagada el:</span> <strong>{formatDate(inv.paidAt)}</strong>
-                  </p>
+                  <>
+                    <dt className="text-muted-foreground">Cobrada el</dt>
+                    <dd className="font-medium text-emerald-700">{formatDate(inv.paidAt)}</dd>
+                  </>
                 ) : null}
-              </div>
+              </dl>
             </div>
           </Card>
-          <Card className="overflow-x-auto p-0">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 text-sm text-slate-500">
+          <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
+            <table className="tabular w-full text-left">
+              <thead className="border-b bg-muted/60 text-sm text-muted-foreground">
                 <tr>
-                  <th className="p-3">Descripción</th>
-                  <th className="p-3 text-right">Cant.</th>
-                  <th className="p-3 text-right">Precio</th>
-                  <th className="p-3 text-right">Importe</th>
+                  <th className="px-4 py-3 font-medium">Descripción</th>
+                  <th className="px-4 py-3 text-right font-medium">Cant.</th>
+                  <th className="px-4 py-3 text-right font-medium">Precio</th>
+                  <th className="px-4 py-3 text-right font-medium">Importe</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y">
                 {inv.lines.map((l, i) => (
-                  <tr key={i} className="border-t border-slate-100">
-                    <td className="p-3">
-                      <p className="font-semibold">{l.description}</p>
-                      {l.widthMm && l.heightMm ? <p className="text-sm text-slate-500">{l.widthMm} × {l.heightMm} mm</p> : null}
+                  <tr key={i}>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{l.description}</p>
+                      {l.widthMm && l.heightMm ? (
+                        <p className="text-sm text-muted-foreground">
+                          {l.widthMm} × {l.heightMm} mm
+                        </p>
+                      ) : null}
                     </td>
-                    <td className="p-3 text-right">{l.quantity}</td>
-                    <td className="p-3 text-right">{formatEuros(l.unitPriceCents)}</td>
-                    <td className="p-3 text-right font-semibold">{formatEuros(lineTotalCents(l.quantity, l.unitPriceCents))}</td>
+                    <td className="px-4 py-3 text-right">{l.quantity}</td>
+                    <td className="px-4 py-3 text-right">{formatEuros(l.unitPriceCents)}</td>
+                    <td className="px-4 py-3 text-right font-semibold">{formatEuros(lineTotalCents(l.quantity, l.unitPriceCents))}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </Card>
+          </div>
         </div>
-        <aside className="flex flex-col gap-4">
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-8 lg:self-start">
           <Card>
-            <dl className="flex flex-col gap-1">
+            <dl className="tabular flex flex-col gap-1.5">
               <div className="flex justify-between">
-                <dt className="text-slate-600">Base imponible</dt>
+                <dt className="text-muted-foreground">Base imponible</dt>
                 <dd>{formatEuros(inv.subtotalCents)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-slate-600">IVA {inv.vatRate}%</dt>
+                <dt className="text-muted-foreground">IVA {inv.vatRate}%</dt>
                 <dd>{formatEuros(inv.vatCents)}</dd>
               </div>
-              <div className="flex justify-between text-2xl font-bold text-brand-700">
+              <div className="mt-1 flex justify-between border-t pt-2 text-2xl font-bold text-primary">
                 <dt>Total</dt>
                 <dd>{formatEuros(inv.totalCents)}</dd>
               </div>
             </dl>
           </Card>
           <Button onClick={() => act(() => downloadInvoicePdf(inv, data!.settings))} disabled={busy}>
-            📄 Descargar PDF
+            <Download />
+            Descargar PDF
           </Button>
           {inv.status === "pendiente" ? (
             <Card className="flex flex-col gap-3">
               <Field label="Fecha de cobro">
                 <Input type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} />
               </Field>
-              <Button variant="secondary" disabled={busy} onClick={() => act(async () => { await setInvoicePaid(inv.id, paidDate); await reload(); })}>
-                ✓ Marcar como pagada
+              <Button
+                variant="secondary"
+                disabled={busy}
+                onClick={() =>
+                  act(async () => {
+                    await setInvoicePaid(inv.id, paidDate);
+                    await reload();
+                  })
+                }
+              >
+                <CircleCheck className="text-emerald-600" />
+                Marcar como pagada
               </Button>
             </Card>
           ) : (
-            <Button variant="ghost" disabled={busy} onClick={() => act(async () => { await setInvoicePaid(inv.id, null); await reload(); })}>
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  await setInvoicePaid(inv.id, null);
+                  await reload();
+                })
+              }
+            >
+              <Undo2 />
               Marcar como pendiente
             </Button>
           )}

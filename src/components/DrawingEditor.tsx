@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { KIND_LABELS, LEAF_LABELS, type DrawingKind, type DrawingParams, type LeafType } from "@/lib/drawings/types";
 import { Field, Input, Select } from "./ui";
@@ -36,30 +37,25 @@ export function DrawingEditor({ value, onChange }: { value: DrawingParams; onCha
       <Field label="Tipo de dibujo">
         <Select
           value={value.kind}
-          onChange={(e) => {
-            const kind = e.target.value as DrawingKind;
+          onValueChange={(v) => {
+            const kind = v as DrawingKind;
             set({ kind, leaves: kind !== "ninguno" && value.leaves.length === 0 ? ["izq"] : value.leaves });
           }}
-        >
-          {(Object.keys(KIND_LABELS) as DrawingKind[]).map((k) => (
-            <option key={k} value={k}>
-              {KIND_LABELS[k]}
-            </option>
-          ))}
-        </Select>
+          options={(Object.keys(KIND_LABELS) as DrawingKind[]).map((k) => ({ value: k, label: KIND_LABELS[k] }))}
+        />
       </Field>
 
       {value.kind !== "ninguno" ? (
         <>
           <div>
-            <span className="text-sm font-semibold text-slate-600">Nº de hojas</span>
-            <div className="mt-1 flex gap-2">
+            <span className="text-sm font-medium text-slate-700">Nº de hojas</span>
+            <div className="mt-1.5 inline-flex rounded-lg border bg-muted p-1">
               {[1, 2, 3, 4].map((n) => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => setLeafCount(n)}
-                  className={`min-h-12 w-14 rounded-xl border text-lg font-bold ${value.leaves.length === n ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 bg-white"}`}
+                  className={`min-h-10 w-12 rounded-md text-lg font-semibold transition ${value.leaves.length === n ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   {n}
                 </button>
@@ -72,24 +68,19 @@ export function DrawingEditor({ value, onChange }: { value: DrawingParams; onCha
               <Field key={i} label={`Hoja ${i + 1}${value.leaves.length > 1 ? (i === 0 ? " (izquierda)" : i === value.leaves.length - 1 ? " (derecha)" : "") : ""}`}>
                 <Select
                   value={leaf}
-                  onChange={(e) => {
+                  onValueChange={(v) => {
                     const leaves = [...value.leaves];
-                    leaves[i] = e.target.value as LeafType;
+                    leaves[i] = v as LeafType;
                     set({ leaves });
                   }}
-                >
-                  {LEAF_OPTIONS.map((o) => (
-                    <option key={o} value={o}>
-                      {LEAF_LABELS[o]}
-                    </option>
-                  ))}
-                </Select>
+                  options={LEAF_OPTIONS.map((o) => ({ value: o, label: LEAF_LABELS[o] }))}
+                />
               </Field>
             ))}
           </div>
 
-          <button type="button" className="self-start font-semibold text-brand-600 hover:underline" onClick={() => setShowFixed((v) => !v)}>
-            {showFixed ? "▾" : "▸"} Fijos superior / inferior / laterales
+          <button type="button" className="inline-flex items-center gap-1 self-start font-medium text-primary hover:underline" onClick={() => setShowFixed((v) => !v)}>
+            <ChevronRight className={`size-4 transition-transform ${showFixed ? "rotate-90" : ""}`} /> Fijos superior / inferior / laterales
           </button>
           {showFixed ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

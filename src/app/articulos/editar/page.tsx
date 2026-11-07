@@ -69,13 +69,11 @@ function ArticleForm({ initial }: { initial: Omit<ArticleType, "id"> & { id?: st
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Categoría">
-              <Select value={a.category} onChange={(e) => set({ category: e.target.value as ArticleCategory })}>
-                {(Object.keys(CATEGORY_LABELS) as ArticleCategory[]).map((c) => (
-                  <option key={c} value={c}>
-                    {CATEGORY_LABELS[c]}
-                  </option>
-                ))}
-              </Select>
+              <Select
+                value={a.category}
+                onValueChange={(v) => set({ category: v as ArticleCategory })}
+                options={(Object.keys(CATEGORY_LABELS) as ArticleCategory[]).map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+              />
             </Field>
             <Field label="Precio orientativo (€)">
               <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" />
@@ -87,7 +85,7 @@ function ArticleForm({ initial }: { initial: Omit<ArticleType, "id"> & { id?: st
               <Input type="number" inputMode="numeric" value={a.defaultHeightMm || ""} onChange={(e) => set({ defaultHeightMm: Number(e.target.value) || 0 })} />
             </Field>
           </div>
-          <hr className="border-slate-200" />
+          <hr />
           <DrawingEditor value={a.drawing} onChange={(d) => set({ drawing: d })} />
           <label className="flex items-center gap-3">
             <input type="checkbox" className="h-6 w-6" checked={a.active} onChange={(e) => set({ active: e.target.checked })} />
@@ -95,8 +93,8 @@ function ArticleForm({ initial }: { initial: Omit<ArticleType, "id"> & { id?: st
           </label>
         </Card>
         <div className="flex flex-col gap-4">
-          <Card className="lg:sticky lg:top-24">
-            <DrawingSvg params={a.drawing} widthMm={a.defaultWidthMm} heightMm={a.defaultHeightMm} className="h-72 w-full text-slate-900" />
+          <Card className="lg:sticky lg:top-8">
+            <DrawingSvg params={a.drawing} widthMm={a.defaultWidthMm} heightMm={a.defaultHeightMm} className="h-72 w-full rounded-lg bg-muted/50 p-3 text-slate-900" />
           </Card>
           <Button onClick={save} disabled={busy || !a.name.trim()}>
             {busy ? "Guardando…" : "Guardar artículo"}

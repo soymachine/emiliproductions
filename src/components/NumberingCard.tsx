@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getLastNumber, setLastNumber, type CounterKind } from "@/lib/db";
 import { formatDocNumber, isValidNumberFormat } from "@/lib/dates";
-import { Button, Card, ErrorBox, Field, Input, Select } from "./ui";
+import { Button, Card, CardTitle, ErrorBox, Field, Input, Select } from "./ui";
 
 const LABELS: Record<CounterKind, { title: string; plural: string }> = {
   invoice: { title: "Facturas", plural: "facturas" },
@@ -26,26 +26,22 @@ export function NumberingCard({
 
   return (
     <Card>
-      <h2 className="mb-2 text-xl font-bold">Numeración</h2>
-      <p className="mb-4 text-slate-600">
-        Cada año la numeración empieza sola desde 1: el año lo marca la fecha del documento. Si vienes de otro programa, indica aquí el
-        último número que usaste y la app seguirá a partir del siguiente.
-      </p>
+      <CardTitle description="Cada año la numeración empieza sola desde 1: el año lo marca la fecha del documento. Si vienes de otro programa, indica el último número que usaste y la app seguirá a partir del siguiente.">
+        Numeración
+      </CardTitle>
       <Field label="Año" className="mb-4 max-w-48">
-        <Select value={year} onChange={(e) => setYear(Number(e.target.value))}>
-          {[thisYear - 1, thisYear, thisYear + 1].map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </Select>
+        <Select
+          value={String(year)}
+          onValueChange={(v) => setYear(Number(v))}
+          options={[thisYear - 1, thisYear, thisYear + 1].map((y) => ({ value: String(y), label: String(y) }))}
+        />
       </Field>
       <div className="grid gap-6 lg:grid-cols-2">
         {(["invoice", "quote"] as CounterKind[]).map((kind) => (
           <CounterEditor key={`${kind}-${year}`} kind={kind} year={year} format={formats[kind]} onFormatChange={(v) => onFormatChange(kind, v)} />
         ))}
       </div>
-      <p className="mt-4 text-sm text-slate-500">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         Formato: <code>{"{AAAA}"}</code> = año (2026), <code>{"{AA}"}</code> = año corto (26), <code>{"{NNN}"}</code> = número con 3 cifras
         (001). Pon tantas N como cifras quieras. Ejemplos: <code>{"F-{AAAA}-{NNN}"}</code> → F-2026-001 · <code>{"{AA}/{NNNN}"}</code> → 26/0001.
         Los cambios de formato se guardan con el botón «Guardar ajustes»; el contador, con su propio botón.
@@ -100,8 +96,8 @@ function CounterEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4">
-      <h3 className="text-lg font-bold">{LABELS[kind].title}</h3>
+    <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-4">
+      <h3 className="font-semibold">{LABELS[kind].title}</h3>
       <Field label="Formato del número">
         <Input value={format} onChange={(e) => onFormatChange(e.target.value)} className="font-mono" />
       </Field>
@@ -119,16 +115,16 @@ function CounterEditor({
           disabled={last === null}
         />
       </Field>
-      <p className="text-slate-700">
+      <p className="rounded-md border bg-card px-3 py-2 text-slate-700">
         La siguiente será:{" "}
-        <strong className="font-mono text-lg text-brand-700">{valid ? formatDocNumber(format, year, parsed + 1) : "—"}</strong>
+        <strong className="font-mono text-lg text-primary">{valid ? formatDocNumber(format, year, parsed + 1) : "—"}</strong>
       </p>
       <ErrorBox error={error} />
       <div className="flex items-center gap-3">
         <Button variant="secondary" onClick={save} disabled={busy || !valid || last === null || parsed === last}>
           {busy ? "Guardando…" : "Guardar contador"}
         </Button>
-        {saved ? <span className="font-semibold text-green-700">✓ Guardado</span> : null}
+        {saved ? <span className="font-medium text-emerald-700">Guardado</span> : null}
       </div>
     </div>
   );

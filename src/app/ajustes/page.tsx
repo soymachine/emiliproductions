@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Download, ImageUp, Save, Trash2 } from "lucide-react";
+import { useCompany } from "@/components/CompanyContext";
 import { NumberingCard } from "@/components/NumberingCard";
-import { Button, Card, ErrorBox, Field, Input, Loading, PageHeader, Select, Textarea } from "@/components/ui";
+import { Button, Card, CardTitle, ErrorBox, Field, Input, Loading, PageHeader, Select, Textarea } from "@/components/ui";
 import { exportBackup, getSettings, saveSettings } from "@/lib/db";
 import { isValidNumberFormat, todayIso } from "@/lib/dates";
 import { useAsync } from "@/lib/useAsync";
@@ -43,6 +45,7 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
   const [error, setError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { refresh } = useCompany();
   const set = <K extends keyof CompanySettings>(k: K, v: CompanySettings[K]) => {
     setS((p) => ({ ...p, [k]: v }));
     setSaved(false);
@@ -58,6 +61,7 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
     try {
       await saveSettings(s);
       setSaved(true);
+      await refresh();
     } catch (e) {
       setError(e);
     } finally {
@@ -79,12 +83,11 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
 
   return (
     <>
-      <PageHeader title="Ajustes" />
+      <PageHeader title="Ajustes" description="Datos de tu empresa, logo, textos de los documentos y numeración." />
       <ErrorBox error={error} />
       <div className="flex flex-col gap-6">
         <Card>
-          <h2 className="mb-4 text-xl font-bold">Datos de la empresa</h2>
-          <p className="mb-4 text-slate-600">Aparecen en la cabecera de presupuestos y facturas.</p>
+          <CardTitle description="Aparecen en la cabecera de presupuestos y facturas.">Datos de la empresa</CardTitle>
           <div className="grid gap-4 sm:grid-cols-6">
             <Field label="Nombre o razón social" className="sm:col-span-4">
               <Input value={s.name} onChange={(e) => set("name", e.target.value)} />
@@ -117,16 +120,17 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
         </Card>
 
         <Card>
-          <h2 className="mb-4 text-xl font-bold">Logo</h2>
+          <CardTitle description="Se muestra en la web (menú, pantalla de acceso e icono de la pestaña) y en los PDF.">Logo</CardTitle>
           <div className="flex flex-wrap items-center gap-4">
             {s.logoDataUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={s.logoDataUrl} alt="Logo" className="max-h-24 max-w-60 rounded-lg border border-slate-200 bg-white p-2" />
+              <img src={s.logoDataUrl} alt="Logo" className="max-h-24 max-w-60 rounded-lg border bg-white p-2" />
             ) : (
-              <span className="text-slate-500">Sin logo</span>
+              <span className="flex h-24 w-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground">Sin logo</span>
             )}
-            <label className="inline-flex min-h-12 cursor-pointer items-center rounded-xl border border-slate-300 bg-white px-5 font-semibold hover:bg-slate-50">
-              Subir logo…
+            <label className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-lg border bg-card px-5 font-semibold shadow-xs transition hover:bg-muted">
+              <ImageUp className="size-5" />
+              {s.logoDataUrl ? "Cambiar logo…" : "Subir logo…"}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -144,6 +148,7 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
             </label>
             {s.logoDataUrl ? (
               <Button variant="ghost" onClick={() => set("logoDataUrl", "")}>
+                <Trash2 />
                 Quitar
               </Button>
             ) : null}
@@ -151,13 +156,17 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
         </Card>
 
         <Card>
-          <h2 className="mb-4 text-xl font-bold">Presupuestos y facturas</h2>
+          <CardTitle>Presupuestos y facturas</CardTitle>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="IVA por defecto">
-              <Select value={s.defaultVatRate} onChange={(e) => set("defaultVatRate", Number(e.target.value) as VatRate)}>
-                <option value={21}>21%</option>
-                <option value={10}>10%</option>
-              </Select>
+              <Select
+                value={String(s.defaultVatRate)}
+                onValueChange={(v) => set("defaultVatRate", Number(v) as VatRate)}
+                options={[
+                  { value: "21", label: "21% (general)" },
+                  { value: "10", label: "10% (reforma de vivienda)" },
+                ]}
+              />
             </Field>
             <Field label="Validez del presupuesto (días)">
               <Input type="number" min={1} value={s.quoteValidityDays} onChange={(e) => set("quoteValidityDays", Number(e.target.value) || 30)} />
@@ -176,18 +185,25 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
           onFormatChange={(kind, v) => set(kind === "invoice" ? "invoiceNumberFormat" : "quoteNumberFormat", v)}
         />
 
-        <div className="flex flex-wrap items-center gap-4">
-          <Button onClick={save} disabled={busy}>
+        <div className="sticky bottom-20 z-10 flex flex-wrap items-center gap-4 rounded-xl border bg-card/95 p-3 shadow-lg backdrop-blur md:bottom-4">
+          <Button onClick={save} disabled={busy} size="lg">
+            <Save />
             {busy ? "Guardando…" : "Guardar ajustes"}
           </Button>
-          {saved ? <span className="font-semibold text-green-700">✓ Guardado</span> : null}
+          {saved ? (
+            <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
+              <Check className="size-4" /> Guardado
+            </span>
+          ) : null}
         </div>
 
         <Card>
-          <h2 className="mb-2 text-xl font-bold">Copia de seguridad</h2>
-          <p className="mb-4 text-slate-600">Descarga todos los datos (clientes, artículos, presupuestos y facturas) en un fichero. Recomendado una vez al mes.</p>
+          <CardTitle description="Descarga todos los datos (clientes, artículos, presupuestos y facturas) en un fichero. Recomendado una vez al mes.">
+            Copia de seguridad
+          </CardTitle>
           <Button variant="secondary" onClick={backup}>
-            ⬇️ Descargar copia de seguridad
+            <Download />
+            Descargar copia de seguridad
           </Button>
         </Card>
       </div>

@@ -13,13 +13,18 @@
     "dev:emu": "NEXT_PUBLIC_USE_EMULATORS=1 NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-emili next dev"
   },
   "dependencies": {
+    "@radix-ui/react-select": "^2.4.1",
     "@react-pdf/renderer": "^4.9.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "firebase": "^12.19.0",
+    "lucide-react": "^1.70.0",
     "next": "^16.4.5",
     "papaparse": "^5.7.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "read-excel-file": "^5.8.8"
+    "read-excel-file": "^5.8.8",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.5",

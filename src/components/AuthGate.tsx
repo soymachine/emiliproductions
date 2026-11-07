@@ -2,9 +2,11 @@
 
 import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, type User } from "firebase/auth";
 import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { BrandMark } from "./Brand";
+import { applyFavicon, CompanyProvider, readCachedBrand } from "./CompanyContext";
 import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
 import { ensureInitialData } from "@/lib/db";
-import { Button, Card, ErrorBox, Field, Input, Loading } from "./ui";
+import { Button, Card, ErrorBox, Field, Input, Loading, Notice } from "./ui";
 
 const UserContext = createContext<User | null>(null);
 export const useUser = () => useContext(UserContext);
@@ -29,7 +31,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (!firebaseConfigured) return <NotConfigured />;
   if (user === undefined) return <Loading />;
   if (!user) return <Login />;
-  return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={user}>
+      <CompanyProvider>{children}</CompanyProvider>
+    </UserContext.Provider>
+  );
 }
 
 function Login() {
@@ -38,6 +44,13 @@ function Login() {
   const [error, setError] = useState<unknown>(null);
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
+  const [brand, setBrand] = useState<{ name: string; logo: string } | null>(null);
+
+  useEffect(() => {
+    const b = readCachedBrand();
+    setBrand(b);
+    if (b?.logo) applyFavicon(b.logo);
+  }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -63,27 +76,34 @@ function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <h1 className="mb-1 text-3xl font-bold text-brand-700">Presupuestos y facturas</h1>
-        <p className="mb-6 text-slate-500">Entra con tu cuenta</p>
-        <ErrorBox error={error} />
-        {info ? <p className="mb-4 rounded-xl bg-green-50 p-4 text-green-800">{info}</p> : null}
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <Field label="Email">
-            <Input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </Field>
-          <Field label="Contraseña">
-            <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </Field>
-          <Button type="submit" disabled={busy} className="mt-2">
-            {busy ? "Entrando…" : "Entrar"}
-          </Button>
-          <button type="button" onClick={reset} className="text-sm text-brand-600 hover:underline">
-            He olvidado la contraseña
-          </button>
-        </form>
-      </Card>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-background to-blue-50 p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <span className="mb-4 flex size-20 items-center justify-center overflow-hidden rounded-2xl border bg-white shadow-sm">
+            <BrandMark logo={brand?.logo} name={brand?.name} className="size-full p-2 text-3xl" />
+          </span>
+          <h1 className="text-2xl font-bold tracking-tight">{brand?.name || "Presupuestos y facturas"}</h1>
+          <p className="text-muted-foreground">Entra con tu cuenta</p>
+        </div>
+        <Card className="shadow-lg">
+          <ErrorBox error={error} />
+          {info ? <Notice>{info}</Notice> : null}
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <Field label="Email">
+              <Input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </Field>
+            <Field label="Contraseña">
+              <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </Field>
+            <Button type="submit" disabled={busy} size="lg" className="mt-2">
+              {busy ? "Entrando…" : "Entrar"}
+            </Button>
+            <button type="button" onClick={reset} className="text-sm font-medium text-primary hover:underline">
+              He olvidado la contraseña
+            </button>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

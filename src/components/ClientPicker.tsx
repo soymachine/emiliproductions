@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus, Search, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { saveClient } from "@/lib/db";
 import { matchesClient } from "@/lib/search";
@@ -31,11 +32,14 @@ export function ClientPicker({
       {selected && !open ? (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-lg font-bold">{selected.name}</p>
-            <p className="text-slate-600">
+            <p className="flex items-center gap-2 text-lg font-semibold">
+              <UserRound className="size-5 text-muted-foreground" />
+              {selected.name}
+            </p>
+            <p className="text-muted-foreground">
               {[selected.nif, selected.address, [selected.postalCode, selected.city].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}
             </p>
-            <p className="text-slate-500">{[selected.phone, selected.email].filter(Boolean).join(" · ")}</p>
+            <p className="text-muted-foreground">{[selected.phone, selected.email].filter(Boolean).join(" · ")}</p>
           </div>
           {!disabled ? (
             <Button variant="secondary" onClick={() => setOpen(true)}>
@@ -46,33 +50,37 @@ export function ClientPicker({
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <Input placeholder="🔍 Buscar cliente por nombre, NIF, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Buscar cliente por nombre, NIF, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus className="pl-12" />
+            </div>
             <Button variant="secondary" onClick={() => setCreating(true)} className="shrink-0">
-              ＋ Nuevo
+              <Plus />
+              Nuevo
             </Button>
           </div>
-          <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
-            {results.length === 0 ? <li className="p-4 text-slate-500">No hay clientes que coincidan.</li> : null}
+          <ul className="divide-y overflow-hidden rounded-lg border">
+            {results.length === 0 ? <li className="p-4 text-muted-foreground">No hay clientes que coincidan.</li> : null}
             {results.map((c) => (
               <li key={c.id}>
                 <button
                   type="button"
-                  className="flex w-full flex-wrap items-center gap-x-4 px-4 py-3 text-left hover:bg-brand-50"
+                  className="flex w-full flex-wrap items-center gap-x-4 px-4 py-3 text-left transition hover:bg-accent"
                   onClick={() => {
                     onSelect(c);
                     setOpen(false);
                     setQ("");
                   }}
                 >
-                  <span className="flex-1 font-semibold">{c.name}</span>
-                  <span className="text-slate-500">{c.nif}</span>
-                  <span className="text-slate-500">{c.city}</span>
+                  <span className="flex-1 font-medium">{c.name}</span>
+                  <span className="text-muted-foreground">{c.nif}</span>
+                  <span className="text-muted-foreground">{c.city}</span>
                 </button>
               </li>
             ))}
           </ul>
           {selected ? (
-            <button type="button" className="self-start text-brand-600 hover:underline" onClick={() => setOpen(false)}>
+            <button type="button" className="self-start font-medium text-primary hover:underline" onClick={() => setOpen(false)}>
               Cancelar
             </button>
           ) : null}

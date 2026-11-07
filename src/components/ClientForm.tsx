@@ -1,5 +1,6 @@
 "use client";
 
+import { Save } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { Client } from "@/lib/types";
 import { Button, Field, Input, Select, Textarea } from "./ui";
@@ -49,10 +50,14 @@ export function ClientForm({
   return (
     <form onSubmit={submit} className="grid gap-4 sm:grid-cols-6">
       <Field label="Tipo" className="sm:col-span-2">
-        <Select value={c.kind} onChange={(e) => set("kind", e.target.value as ClientInput["kind"])}>
-          <option value="particular">Particular</option>
-          <option value="empresa">Empresa / Autónomo</option>
-        </Select>
+        <Select
+          value={c.kind}
+          onValueChange={(v) => set("kind", v as ClientInput["kind"])}
+          options={[
+            { value: "particular", label: "Particular" },
+            { value: "empresa", label: "Empresa / Autónomo" },
+          ]}
+        />
       </Field>
       <Field label={c.kind === "empresa" ? "Razón social *" : "Nombre y apellidos *"} className="sm:col-span-4">
         <Input value={c.name} onChange={(e) => set("name", e.target.value)} required autoFocus={!initial.name} />
@@ -88,6 +93,7 @@ export function ClientForm({
       ) : null}
       <div className="sm:col-span-6">
         <Button type="submit" disabled={busy || !c.name.trim()}>
+          <Save />
           {busy ? "Guardando…" : submitLabel}
         </Button>
       </div>
