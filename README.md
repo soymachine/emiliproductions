@@ -27,10 +27,10 @@ Numeración: `P-2026-001` para presupuestos y `F-2026-001` para facturas; se rei
 2. **Authentication** → *Comenzar* → activar *Correo electrónico/contraseña*. En la pestaña *Usuarios*, *Añadir usuario* con el email y contraseña de Emili.
 3. **Firestore Database** → *Crear base de datos* → modo producción, ubicación `eur3 (europe-west)`.
 4. **Configuración del proyecto** → *Tus apps* → icono web `</>` → registrar la app. Copiar los valores de `firebaseConfig`.
-5. En este repositorio:
-   - `cp .env.example .env.local` y rellenar los valores del paso 4.
-   - En `.firebaserc` poner el ID del proyecto.
-   - En `firestore.rules` cambiar `cambiar@ejemplo.com` por el email de Emili **en minúsculas**.
+5. Configuración ya incluida en este repositorio para el proyecto `emili-gestion`:
+   - `.env.production`: configuración web pública de Firebase (no es secreta).
+   - `.firebaserc`: ID del proyecto.
+   - `firestore.rules`: emails con acceso (`xuse.moya@gmail.com`, `soymachine@gmail.com`). Para dar acceso a otra persona, créala en Authentication y añade su email aquí en minúsculas.
 6. Desplegar:
    ```bash
    npm install
@@ -44,7 +44,6 @@ Al entrar por primera vez se crea el catálogo de artículos inicial y unos dato
 ### Despliegue automático (opcional)
 
 `.github/workflows/deploy.yml` despliega al hacer push a `main` (GitHub Actions es gratis). Hay que configurar en GitHub → *Settings → Secrets and variables → Actions*:
-- Variables: `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`.
 - Secreto `FIREBASE_SERVICE_ACCOUNT`: JSON de una cuenta de servicio (Consola Google Cloud → IAM → Cuentas de servicio) con los roles *Firebase Hosting Admin* y *Firebase Rules Admin*.
 
 ## Importar clientes de InGnio
