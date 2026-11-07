@@ -1,7 +1,8 @@
 rules_version = '2';
 
-// Solo estas cuentas pueden leer o escribir datos.
-// Para dar acceso a otra persona: créala en Firebase Authentication y añade aquí su email en minúsculas.
+// isOwner(): acceso completo. isViewer(): solo consulta (presupuestos y facturas, sin poder cambiar nada).
+// Para dar acceso a otra persona: créala en Firebase Authentication y añade su email en minúsculas
+// en la lista que corresponda. Los de consulta también van en src/lib/access.ts.
 service cloud.firestore {
   match /databases/{database}/documents {
     function isOwner() {
@@ -9,10 +10,19 @@ service cloud.firestore {
         && request.auth.token.email in ['xuse.moya@gmail.com', 'soymachine@gmail.com'];
     }
 
-    match /settings/{id} { allow read, write: if isOwner(); }
-    match /clients/{id} { allow read, write: if isOwner(); }
-    match /articleTypes/{id} { allow read, write: if isOwner(); }
-    match /quotes/{id} { allow read, write: if isOwner(); }
+    function isViewer() {
+      return request.auth != null
+        && request.auth.token.email in [];
+    }
+
+    function canRead() {
+      return isOwner() || isViewer();
+    }
+
+    match /settings/{id} { allow read: if canRead(); allow write: if isOwner(); }
+    match /clients/{id} { allow read: if canRead(); allow write: if isOwner(); }
+    match /articleTypes/{id} { allow read: if canRead(); allow write: if isOwner(); }
+    match /quotes/{id} { allow read: if canRead(); allow write: if isOwner(); }
     match /counters/{id} {
       allow read, create, update: if isOwner();
       allow delete: if false;
@@ -20,7 +30,8 @@ service cloud.firestore {
 
     // Las facturas emitidas no se pueden borrar ni modificar: solo se registran sus cobros.
     match /invoices/{id} {
-      allow read, create: if isOwner();
+      allow read: if canRead();
+      allow create: if isOwner();
       allow update: if isOwner()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paidAt', 'payments', 'paidCents']);
       allow delete: if false;

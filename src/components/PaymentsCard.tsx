@@ -12,7 +12,7 @@ import { Button, Card, CardTitle, ErrorBox, Field, Input, Select } from "./ui";
 const METHOD_OPTIONS = (Object.keys(METHOD_LABELS) as PaymentMethod[]).map((m) => ({ value: m, label: METHOD_LABELS[m] }));
 
 /** Cobros de una factura: se puede cobrar en varias veces y por importes distintos. */
-export function PaymentsCard({ invoice, onChange }: { invoice: Invoice; onChange: () => Promise<void> }) {
+export function PaymentsCard({ invoice, onChange, readOnly = false }: { invoice: Invoice; onChange: () => Promise<void>; readOnly?: boolean }) {
   const payments = paymentsOf(invoice);
   const paid = paidCentsOf(invoice);
   const pending = pendingCentsOf(invoice);
@@ -77,7 +77,7 @@ export function PaymentsCard({ invoice, onChange }: { invoice: Invoice; onChange
                   {p.note ? ` · ${p.note}` : ""}
                 </span>
               </span>
-              <button
+              {!readOnly ? <button
                 type="button"
                 disabled={busy}
                 onClick={() => {
@@ -88,7 +88,7 @@ export function PaymentsCard({ invoice, onChange }: { invoice: Invoice; onChange
                 aria-label={`Borrar cobro de ${formatEuros(p.amountCents)}`}
               >
                 <Trash2 className="size-4" />
-              </button>
+              </button> : null}
             </li>
           ))}
         </ul>
@@ -96,7 +96,7 @@ export function PaymentsCard({ invoice, onChange }: { invoice: Invoice; onChange
         <p className="mb-4 text-sm text-muted-foreground">Aún no hay cobros registrados.</p>
       )}
 
-      {pending > 0 ? (
+      {readOnly ? null : pending > 0 ? (
         <form onSubmit={submit} className="flex flex-col gap-3 border-t pt-4">
           <p className="flex items-center gap-2 font-medium">
             <Wallet className="size-5 text-muted-foreground" />

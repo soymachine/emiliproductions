@@ -25,6 +25,7 @@ import { DrawingSvg } from "@/lib/drawings/DrawingSvg";
 import { computeTotals, formatEuros } from "@/lib/money";
 import { buildQuotePdf, type BuiltPdf } from "@/lib/pdf/download";
 import { PdfPreview } from "@/components/PdfPreview";
+import { useIsViewer } from "@/components/AuthGate";
 import { DiscountBox } from "@/components/DiscountBox";
 import { useAsync } from "@/lib/useAsync";
 import type { ArticleCategory, ArticleType, Client, CompanySettings, Quote, QuoteLine, VatRate } from "@/lib/types";
@@ -38,6 +39,7 @@ export default function Page() {
 }
 
 function QuoteEditorLoader() {
+  const viewer = useIsViewer();
   const params = useSearchParams();
   const id = params.get("id");
   const duplicateOf = params.get("duplicar");
@@ -57,6 +59,7 @@ function QuoteEditorLoader() {
   if (loading) return <Loading />;
   if (error || !data) return <ErrorBox error={error} />;
   if (id && !data.quote) return <ErrorBox error="Presupuesto no encontrado." />;
+  if (viewer && !id) return <ErrorBox error="Tu usuario es de solo consulta: no puede crear presupuestos." />;
 
   const today = todayIso();
   let initial: QuoteDraft & { number?: string; invoiceId?: string | null };
@@ -121,7 +124,10 @@ function QuoteEditor({
   // Se incrementa al aplicar un descuento para que cada línea vuelva a mostrar su precio.
   const [linesVersion, setLinesVersion] = useState(0);
 
-  const readOnly = Boolean(initial.invoiceId);
+  const viewer = useIsViewer();
+  const invoiced = Boolean(initial.invoiceId);
+  // Un usuario de consulta lo ve todo como si estuviera facturado: nada se puede tocar.
+  const readOnly = invoiced || viewer;
   const totals = useMemo(() => computeTotals(q.lines, q.vatRate), [q.lines, q.vatRate]);
 
   const update = (patch: Partial<QuoteDraft>) => {
@@ -196,16 +202,18 @@ function QuoteEditor({
       <PageHeader
         title={title}
         back={{ href: "/presupuestos/", label: "Presupuestos" }}
-        actions={initial.number ? <Badge status={readOnly ? "facturado" : "sin facturar"} /> : null}
+        actions={initial.number ? <Badge status={invoiced ? "facturado" : "sin facturar"} /> : null}
       />
       <ErrorBox error={error} />
-      {readOnly ? (
+      {invoiced ? (
         <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50 p-4 text-violet-900">
           Este presupuesto ya está facturado y no se puede modificar.{" "}
           <Link className="font-semibold underline" href={`/facturas/ver/?id=${initial.invoiceId}`}>
             Ver factura
           </Link>
         </div>
+      ) : viewer ? (
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-900">Modo consulta: puedes ver el presupuesto y descargar su PDF.</div>
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -342,7 +350,7 @@ function QuoteEditor({
               Convertir en factura
             </Button>
           ) : null}
-          {q.id ? (
+          {q.id && !viewer ? (
             <Button variant="ghost" onClick={() => router.push(`/presupuestos/editar/?duplicar=${q.id}`)}>
               <Copy />
               Duplicar presupuesto

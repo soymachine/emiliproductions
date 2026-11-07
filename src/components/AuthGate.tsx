@@ -6,10 +6,13 @@ import { BrandMark } from "./Brand";
 import { applyFavicon, CompanyProvider, readCachedBrand } from "./CompanyContext";
 import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
 import { ensureInitialData } from "@/lib/db";
+import { isViewerEmail } from "@/lib/access";
 import { Button, Card, ErrorBox, Field, Input, Loading, Notice } from "./ui";
 
 const UserContext = createContext<User | null>(null);
 export const useUser = () => useContext(UserContext);
+/** true si el usuario conectado es de solo consulta. */
+export const useIsViewer = () => isViewerEmail(useContext(UserContext)?.email);
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -19,7 +22,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return onAuthStateChanged(getFirebaseAuth(), async (u) => {
       if (u) {
         try {
-          await ensureInitialData();
+          if (!isViewerEmail(u.email)) await ensureInitialData();
         } catch (e) {
           console.error(e);
         }

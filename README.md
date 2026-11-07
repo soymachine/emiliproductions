@@ -46,6 +46,14 @@ Al entrar por primera vez se crea el catálogo de artículos inicial y unos dato
 `.github/workflows/deploy.yml` despliega al hacer push a `main` (GitHub Actions es gratis). Hay que configurar en GitHub → *Settings → Secrets and variables → Actions*:
 - Secreto `FIREBASE_SERVICE_ACCOUNT`: JSON de una cuenta de servicio (Consola Google Cloud → IAM → Cuentas de servicio) con los roles *Firebase Hosting Admin* y *Firebase Rules Admin*.
 
+## Usuarios
+
+- **Acceso completo:** los emails de `isOwner()` en `firestore.rules`.
+- **Solo consulta** (ven presupuestos y facturas y descargan sus PDF, sin poder cambiar nada ni crear presupuestos):
+  1. Crea la cuenta en Firebase → Authentication → Usuarios.
+  2. Añade su email en minúsculas en `src/lib/access.ts` (`VIEWER_EMAILS`) **y** en `isViewer()` de `firestore.rules`.
+  3. `npm run deploy`.
+
 ## Importar clientes de InGnio
 
 Exporta los clientes desde InGnio a CSV o Excel. En **Clientes → Importar** se sube el fichero, la app adivina qué columna es cada dato (nombre, NIF, dirección, CP, población, provincia, teléfonos, email), se puede corregir, y se saltan los NIF repetidos.

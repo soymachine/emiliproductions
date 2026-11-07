@@ -4,6 +4,7 @@ import { FileText, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge, Empty, ErrorBox, Input, LinkButton, ListCard, ListRow, Loading, PageHeader, Select } from "@/components/ui";
 import { listQuotes } from "@/lib/db";
+import { useIsViewer } from "@/components/AuthGate";
 import { formatDate } from "@/lib/dates";
 import { formatEuros } from "@/lib/money";
 import { normalizeText } from "@/lib/search";
@@ -18,6 +19,7 @@ const FILTER_OPTIONS = [
 ];
 
 export default function QuotesPage() {
+  const viewer = useIsViewer();
   const { data, error, loading } = useAsync(listQuotes);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<Filter>("todos");
@@ -37,10 +39,12 @@ export default function QuotesPage() {
         title="Presupuestos"
         description={data ? `${data.length} presupuestos` : undefined}
         actions={
-          <LinkButton href="/presupuestos/editar/">
-            <Plus />
-            Nuevo presupuesto
-          </LinkButton>
+          viewer ? null : (
+            <LinkButton href="/presupuestos/editar/">
+              <Plus />
+              Nuevo presupuesto
+            </LinkButton>
+          )
         }
       />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">

@@ -6,6 +6,7 @@ import { FileText } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Badge, Button, Card, ErrorBox, Loading, PageHeader } from "@/components/ui";
 import { PaymentsCard } from "@/components/PaymentsCard";
+import { useIsViewer } from "@/components/AuthGate";
 import { getInvoice, getSettings } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
 import { formatEuros, lineTotalCents } from "@/lib/money";
@@ -23,6 +24,7 @@ export default function Page() {
 
 function InvoiceView() {
   const id = useSearchParams().get("id") ?? "";
+  const viewer = useIsViewer();
   const { data, error, loading, reload } = useAsync(async () => {
     const [invoice, settings] = await Promise.all([getInvoice(id), getSettings()]);
     return { invoice, settings };
@@ -133,7 +135,7 @@ function InvoiceView() {
             <FileText />
             {busy ? "Generando…" : "Ver PDF"}
           </Button>
-          <PaymentsCard invoice={inv} onChange={reload} />
+          <PaymentsCard invoice={inv} onChange={reload} readOnly={viewer} />
         </aside>
       </div>
       {preview ? <PdfPreview pdf={preview} onClose={() => setPreview(null)} /> : null}
