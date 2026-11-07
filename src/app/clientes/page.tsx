@@ -1,13 +1,16 @@
 "use client";
 
-import { Building2, Mail, MapPin, Phone, Plus, Search, Upload, User, Users } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Building2, Plus, Search, Upload, User, Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Empty, ErrorBox, Input, LinkButton, ListCard, ListRow, Loading, PageHeader, Select } from "@/components/ui";
+import { Empty, ErrorBox, Input, LinkButton, Loading, PageHeader, Select } from "@/components/ui";
 import { listClients } from "@/lib/db";
 import { matchesClient } from "@/lib/search";
 import { useAsync } from "@/lib/useAsync";
 
 export default function ClientsPage() {
+  const router = useRouter();
   const { data, error, loading } = useAsync(listClients);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"name" | "code">("name");
@@ -64,42 +67,44 @@ export default function ClientsPage() {
       ) : filtered.length === 0 ? (
         <Empty icon={<Users />}>{data?.length ? "Ningún cliente coincide con la búsqueda." : "Aún no hay clientes. Crea uno o impórtalos desde InGnio."}</Empty>
       ) : (
-        <ListCard>
-          {filtered.map((c) => (
-            <ListRow key={c.id} href={`/clientes/editar/?id=${c.id}`}>
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-slate-500">
-                {c.kind === "empresa" ? <Building2 className="size-5" /> : <User className="size-5" />}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline gap-2">
-                  {c.code ? <span className="shrink-0 rounded bg-muted px-1.5 font-mono text-sm text-muted-foreground">{c.code}</span> : null}
-                  <span className="truncate font-medium">{c.name}</span>
-                </span>
-                <span className="flex flex-wrap gap-x-4 text-sm text-muted-foreground">
-                  {c.nif ? <span>{c.nif}</span> : null}
-                  {c.city ? (
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="size-3.5" />
-                      {c.city}
-                    </span>
-                  ) : null}
-                  {c.phone ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Phone className="size-3.5" />
-                      {c.phone}
-                    </span>
-                  ) : null}
-                  {c.email ? (
-                    <span className="hidden items-center gap-1 lg:inline-flex">
-                      <Mail className="size-3.5" />
-                      {c.email}
-                    </span>
-                  ) : null}
-                </span>
-              </span>
-            </ListRow>
-          ))}
-        </ListCard>
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
+          <table className="w-full min-w-[820px] text-left">
+            <thead className="border-b bg-muted/60 text-sm text-muted-foreground">
+              <tr>
+                <th className="w-24 px-4 py-3 font-medium">Código</th>
+                <th className="px-4 py-3 font-medium">Nombre</th>
+                <th className="px-4 py-3 font-medium">NIF</th>
+                <th className="px-4 py-3 font-medium">Población</th>
+                <th className="px-4 py-3 font-medium">Teléfono</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filtered.map((c) => {
+                const href = `/clientes/editar/?id=${c.id}`;
+                return (
+                  <tr key={c.id} onClick={() => router.push(href)} className="cursor-pointer transition-colors hover:bg-muted/60">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-sm text-muted-foreground">{c.code}</td>
+                    <td className="max-w-[18rem] px-4 py-3">
+                      <Link href={href} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 font-medium hover:text-primary">
+                        {c.kind === "empresa" ? (
+                          <Building2 className="size-4 shrink-0 text-muted-foreground" aria-label="Empresa" />
+                        ) : (
+                          <User className="size-4 shrink-0 text-muted-foreground" aria-label="Particular" />
+                        )}
+                        <span className="truncate">{c.name}</span>
+                      </Link>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">{c.nif}</td>
+                    <td className="max-w-[10rem] truncate px-4 py-3">{c.city}</td>
+                    <td className="whitespace-nowrap px-4 py-3">{c.phone}</td>
+                    <td className="max-w-[14rem] truncate px-4 py-3 text-muted-foreground">{c.email}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
       {data && q ? <p className="mt-3 text-sm text-muted-foreground">{`${filtered.length} de ${data.length} clientes`}</p> : null}
     </>

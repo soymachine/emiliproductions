@@ -56,6 +56,9 @@ export default function InvoicesPage() {
     [data, q, status, from, to],
   );
 
+  // La columna «Cobro» solo aparece al ver las pendientes de cobro.
+  const showCobro = status === "pendientes";
+
   const sum = filtered.reduce(
     (acc, i) => ({
       base: acc.base + i.subtotalCents,
@@ -135,7 +138,7 @@ export default function InvoicesPage() {
       ) : (
         <>
           <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
-            <table className="tabular w-full min-w-[760px] text-left">
+            <table className="tabular w-full min-w-[680px] text-left">
               <thead className="border-b bg-muted/60 text-sm text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-medium">Fecha</th>
@@ -144,7 +147,7 @@ export default function InvoicesPage() {
                   <th className="px-4 py-3 text-right font-medium">Base imponible</th>
                   <th className="px-4 py-3 text-right font-medium">IVA</th>
                   <th className="px-4 py-3 text-right font-medium">Total</th>
-                  <th className="px-4 py-3 text-right font-medium">Cobro</th>
+                  {showCobro ? <th className="px-4 py-3 text-right font-medium">Cobro</th> : null}
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -165,10 +168,12 @@ export default function InvoicesPage() {
                         {formatEuros(x.vatCents)} <span className="text-xs">({x.vatRate}%)</span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold">{formatEuros(x.totalCents)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right">
-                        <Badge status={st} />
-                        {st === "parcial" ? <span className="block text-xs text-amber-700">Pendiente {formatEuros(pendingCentsOf(x))}</span> : null}
-                      </td>
+                      {showCobro ? (
+                        <td className="whitespace-nowrap px-4 py-3 text-right">
+                          <Badge status={st} />
+                          <span className="block text-xs text-amber-700">Falta {formatEuros(pendingCentsOf(x))}</span>
+                        </td>
+                      ) : null}
                     </tr>
                   );
                 })}
