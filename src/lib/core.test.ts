@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computeTotals, formatEuros, parseEurosToCents } from "./money";
 import { addDaysIso, formatDate, formatDocNumber, isValidNumberFormat } from "./dates";
 import { generateDrawing } from "./drawings/generate";
-import { drawing, SEED_ARTICLE_TYPES } from "./defaults";
+import { DEFAULT_SETTINGS, drawing, fillQuoteNotes, SEED_ARTICLE_TYPES } from "./defaults";
 import { decodeText, guessKind, guessMapping, planImport, rowsToClients, type ImportedClient } from "./import/clients";
 import { matchesClient, nextClientCode } from "./search";
 
@@ -178,5 +178,16 @@ describe("código de cliente", () => {
     const skip = planImport(imported, existing, "skip");
     expect(skip.toUpdate).toEqual([]);
     expect(skip.toCreate).toHaveLength(1);
+  });
+});
+
+describe("observaciones por defecto", () => {
+  it("rellena días e IBAN", () => {
+    const t = fillQuoteNotes({ ...DEFAULT_SETTINGS, quoteValidityDays: 30, iban: "ES12 3456 7890 1234 5678 9012" });
+    expect(t).toContain("Pressupost vàlid per 30 dies");
+    expect(t.split("\n").at(-1)).toBe("ES12 3456 7890 1234 5678 9012");
+  });
+  it("deja un hueco visible si falta el IBAN", () => {
+    expect(fillQuoteNotes({ ...DEFAULT_SETTINGS, iban: "" })).toContain("ESXX XXXX");
   });
 });

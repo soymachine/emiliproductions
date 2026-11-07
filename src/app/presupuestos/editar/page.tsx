@@ -7,7 +7,7 @@ import { ClientPicker } from "@/components/ClientPicker";
 import { QuoteLineCard } from "@/components/QuoteLineCard";
 import { Copy, Download, FilePlus2, Plus, Receipt, Save, Check, Trash2 } from "lucide-react";
 import { Badge, Button, Card, CardTitle, Empty, ErrorBox, Field, Input, Loading, Modal, PageHeader, Select, Textarea } from "@/components/ui";
-import { CATEGORY_LABELS } from "@/lib/defaults";
+import { CATEGORY_LABELS, fillQuoteNotes } from "@/lib/defaults";
 import {
   clientSnapshot,
   convertQuoteToInvoice,
@@ -69,7 +69,7 @@ function QuoteEditorLoader() {
       client: client ? clientSnapshot(client) : { name: "", nif: "", address: "", postalCode: "", city: "", province: "", phone: "", email: "" },
       lines: src ? src.lines.map((l) => ({ ...l, id: newId() })) : [],
       vatRate: src?.vatRate ?? data.settings.defaultVatRate,
-      notes: src?.notes ?? "",
+      notes: src ? src.notes : fillQuoteNotes(data.settings),
     };
   }
 
@@ -237,8 +237,8 @@ function QuoteEditor({
           ) : null}
 
           <Card>
-            <Field label="Observaciones (aparecen en el PDF)">
-              <Textarea value={q.notes} onChange={(e) => update({ notes: e.target.value })} disabled={readOnly} />
+            <Field label="Observaciones (aparecen en el PDF)" hint={readOnly ? undefined : "El texto inicial se cambia en Ajustes → Observaciones por defecto."}>
+              <Textarea rows={5} value={q.notes} onChange={(e) => update({ notes: e.target.value })} disabled={readOnly} />
             </Field>
           </Card>
         </div>

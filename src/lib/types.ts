@@ -17,7 +17,11 @@ export interface CompanySettings {
   defaultVatRate: VatRate;
   /** Días de validez por defecto de un presupuesto. */
   quoteValidityDays: number;
-  quoteConditions: string;
+  /**
+   * Texto que se pone en las observaciones de cada presupuesto nuevo (editable en cada uno).
+   * {DIES} = días de validez · {IBAN} = cuenta bancaria.
+   */
+  quoteNotesTemplate: string;
   /** Plantilla del número de presupuesto, p. ej. "P-{AAAA}-{NNN}". */
   quoteNumberFormat: string;
   /** Plantilla del número de factura, p. ej. "F-{AAAA}-{NNN}". */

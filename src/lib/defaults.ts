@@ -14,8 +14,12 @@ export const DEFAULT_SETTINGS: CompanySettings = {
   logoDataUrl: "",
   defaultVatRate: 21,
   quoteValidityDays: 30,
-  quoteConditions:
-    "Presupuesto válido durante el plazo indicado. Forma de pago: 50% a la aceptación y 50% a la finalización de la instalación. Incluye suministro e instalación.",
+  quoteNotesTemplate: [
+    "Pressupost vàlid per {DIES} dies",
+    "Forma de pagament: 50% a l'acceptació del pressupost - Resta a la finalització de la feina amb la presentació de la factura",
+    "El pagament es farà per transferència bancària al compte:",
+    "{IBAN}",
+  ].join("\n"),
   invoiceFooter: "Forma de pago: transferencia bancaria a la cuenta indicada.",
   quoteNumberFormat: "P-{AAAA}-{NNN}",
   invoiceNumberFormat: "F-{AAAA}-{NNN}",
@@ -64,3 +68,10 @@ export const CATEGORY_LABELS: Record<ArticleType["category"], string> = {
   fijo: "Fijos",
   otro: "Otros",
 };
+
+/** Rellena la plantilla de observaciones con los días de validez y el IBAN de Ajustes. */
+export function fillQuoteNotes(s: Pick<CompanySettings, "quoteNotesTemplate" | "quoteValidityDays" | "iban">): string {
+  return (s.quoteNotesTemplate ?? "")
+    .replace(/\{DIES\}|\{DIAS\}|\{DÍAS\}/gi, String(s.quoteValidityDays || 30))
+    .replace(/\{IBAN\}/gi, s.iban?.trim() || "ESXX XXXX XXXX XXXX XXXX XXXX");
+}

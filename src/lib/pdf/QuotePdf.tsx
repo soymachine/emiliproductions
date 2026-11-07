@@ -54,12 +54,6 @@ export function QuotePdf({ quote, company }: { quote: Quote; company: CompanySet
             <Text>{quote.notes}</Text>
           </View>
         ) : null}
-        {company.quoteConditions ? (
-          <View style={s.notes} wrap={false}>
-            <Text style={s.boxLabel}>Condiciones</Text>
-            <Text>{company.quoteConditions}</Text>
-          </View>
-        ) : null}
 
         <View style={{ flexDirection: "row", marginTop: 36, gap: 24 }} wrap={false}>
           <View style={{ flex: 1, borderTop: "0.5pt solid #94a3b8", paddingTop: 4 }}>
