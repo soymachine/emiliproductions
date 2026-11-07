@@ -25,7 +25,7 @@ export function ClientPicker({
   const [open, setOpen] = useState(!selectedId);
   const [creating, setCreating] = useState(false);
   const selected = clients.find((c) => c.id === selectedId);
-  const results = useMemo(() => clients.filter((c) => matchesClient(c, q)).slice(0, 8), [clients, q]);
+  const results = useMemo(() => clients.filter((c) => matchesClient(c, q)).slice(0, 200), [clients, q]);
 
   return (
     <div>
@@ -60,7 +60,7 @@ export function ClientPicker({
               Nuevo
             </Button>
           </div>
-          <ul className="divide-y overflow-hidden rounded-lg border">
+          <ul className="max-h-80 divide-y overflow-y-auto overscroll-contain rounded-lg border" aria-label="Clientes">
             {results.length === 0 ? <li className="p-4 text-muted-foreground">No hay clientes que coincidan.</li> : null}
             {results.map((c) => (
               <li key={c.id}>

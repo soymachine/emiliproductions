@@ -2,7 +2,9 @@
 
 import { CalendarRange, Receipt, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge, Card, Empty, ErrorBox, Field, Input, ListCard, ListRow, Loading, PageHeader, Select } from "@/components/ui";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Badge, Card, Empty, ErrorBox, Field, Input, Loading, PageHeader, Select } from "@/components/ui";
 import { listInvoices } from "@/lib/db";
 import { formatDate, rangePreset, type RangePreset } from "@/lib/dates";
 import { formatEuros } from "@/lib/money";
@@ -28,6 +30,7 @@ function statusOf(i: Invoice): "pendiente" | "parcial" | "pagada" {
 }
 
 export default function InvoicesPage() {
+  const router = useRouter();
   const { data, error, loading } = useAsync(listInvoices);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusFilter>("todas");
@@ -131,28 +134,47 @@ export default function InvoicesPage() {
         <Empty icon={<Receipt />}>{data?.length ? "Ninguna factura coincide con el filtro." : "Aún no hay facturas."}</Empty>
       ) : (
         <>
-          <ListCard>
-            {filtered.map((x) => {
-              const st = statusOf(x);
-              return (
-                <ListRow key={x.id} href={`/facturas/ver/?id=${x.id}`}>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{x.client.name}</span>
-                    <span className="block text-sm text-muted-foreground">
-                      <span className="font-mono">{x.number}</span> · {formatDate(x.date)}
-                    </span>
-                  </span>
-                  <span className="tabular text-right">
-                    <span className="block font-semibold">{formatEuros(x.totalCents)}</span>
-                    {st === "parcial" ? <span className="block text-sm text-amber-700">Pendiente {formatEuros(pendingCentsOf(x))}</span> : null}
-                  </span>
-                  <span className="w-28 text-right">
-                    <Badge status={st} />
-                  </span>
-                </ListRow>
-              );
-            })}
-          </ListCard>
+          <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
+            <table className="tabular w-full min-w-[760px] text-left">
+              <thead className="border-b bg-muted/60 text-sm text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Fecha</th>
+                  <th className="px-4 py-3 font-medium">Nº factura</th>
+                  <th className="px-4 py-3 font-medium">Cliente</th>
+                  <th className="px-4 py-3 text-right font-medium">Base imponible</th>
+                  <th className="px-4 py-3 text-right font-medium">IVA</th>
+                  <th className="px-4 py-3 text-right font-medium">Total</th>
+                  <th className="px-4 py-3 text-right font-medium">Cobro</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((x) => {
+                  const st = statusOf(x);
+                  const href = `/facturas/ver/?id=${x.id}`;
+                  return (
+                    <tr key={x.id} onClick={() => router.push(href)} className="cursor-pointer transition-colors hover:bg-muted/60">
+                      <td className="whitespace-nowrap px-4 py-3">{formatDate(x.date)}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <Link href={href} className="font-mono text-sm font-medium text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                          {x.number}
+                        </Link>
+                      </td>
+                      <td className="max-w-[16rem] truncate px-4 py-3 font-medium">{x.client.name}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right">{formatEuros(x.subtotalCents)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-muted-foreground">
+                        {formatEuros(x.vatCents)} <span className="text-xs">({x.vatRate}%)</span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold">{formatEuros(x.totalCents)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                        <Badge status={st} />
+                        {st === "parcial" ? <span className="block text-xs text-amber-700">Pendiente {formatEuros(pendingCentsOf(x))}</span> : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
           <Card className="tabular mt-4 grid grid-cols-2 gap-4 py-4 text-center sm:grid-cols-5 sm:py-4">
             <div>
               <p className="text-sm text-muted-foreground">Base</p>
