@@ -2,7 +2,7 @@
 
 import { Building2, Mail, MapPin, Phone, Plus, Search, Upload, User, Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Empty, ErrorBox, Input, LinkButton, ListCard, ListRow, Loading, PageHeader } from "@/components/ui";
+import { Empty, ErrorBox, Input, LinkButton, ListCard, ListRow, Loading, PageHeader, Select } from "@/components/ui";
 import { listClients } from "@/lib/db";
 import { matchesClient } from "@/lib/search";
 import { useAsync } from "@/lib/useAsync";
@@ -10,7 +10,19 @@ import { useAsync } from "@/lib/useAsync";
 export default function ClientsPage() {
   const { data, error, loading } = useAsync(listClients);
   const [q, setQ] = useState("");
-  const filtered = useMemo(() => (data ?? []).filter((c) => matchesClient(c, q)), [data, q]);
+  const [sort, setSort] = useState<"name" | "code">("name");
+  const filtered = useMemo(() => {
+    const list = (data ?? []).filter((c) => matchesClient(c, q));
+    if (sort === "code") {
+      // Orden natural: 2 antes que 10; los que no tienen código, al final.
+      list.sort((a, b) => {
+        if (!a.code) return b.code ? 1 : 0;
+        if (!b.code) return -1;
+        return a.code.localeCompare(b.code, "es", { numeric: true });
+      });
+    }
+    return list;
+  }, [data, q, sort]);
 
   return (
     <>
@@ -30,9 +42,21 @@ export default function ClientsPage() {
           </>
         }
       />
-      <div className="relative mb-4">
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar por nombre, NIF, población, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-12" />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Buscar por código, nombre, NIF, población, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-12" />
+        </div>
+        <Select
+          value={sort}
+          onValueChange={(v) => setSort(v as "name" | "code")}
+          options={[
+            { value: "name", label: "Ordenar por nombre" },
+            { value: "code", label: "Ordenar por código" },
+          ]}
+          className="sm:w-60"
+          aria-label="Ordenar"
+        />
       </div>
       <ErrorBox error={error} />
       {loading ? (
@@ -47,7 +71,10 @@ export default function ClientsPage() {
                 {c.kind === "empresa" ? <Building2 className="size-5" /> : <User className="size-5" />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{c.name}</span>
+                <span className="flex items-baseline gap-2">
+                  {c.code ? <span className="shrink-0 rounded bg-muted px-1.5 font-mono text-sm text-muted-foreground">{c.code}</span> : null}
+                  <span className="truncate font-medium">{c.name}</span>
+                </span>
                 <span className="flex flex-wrap gap-x-4 text-sm text-muted-foreground">
                   {c.nif ? <span>{c.nif}</span> : null}
                   {c.city ? (

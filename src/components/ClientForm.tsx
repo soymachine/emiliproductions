@@ -8,6 +8,7 @@ import { Button, Field, Input, Select, Textarea } from "./ui";
 export type ClientInput = Omit<Client, "id" | "createdAt" | "updatedAt">;
 
 export const EMPTY_CLIENT: ClientInput = {
+  code: "",
   kind: "particular",
   name: "",
   nif: "",
@@ -26,22 +27,27 @@ export function ClientForm({
   onSubmit,
   submitLabel = "Guardar cliente",
   compact = false,
+  takenCodes,
 }: {
   initial: ClientInput;
   onSubmit: (c: ClientInput) => Promise<void>;
   submitLabel?: string;
   compact?: boolean;
+  /** Códigos ya usados por otros clientes (código → nombre), para avisar de repetidos. */
+  takenCodes?: Map<string, string>;
 }) {
-  const [c, setC] = useState<ClientInput>(initial);
+  const [c, setC] = useState<ClientInput>({ ...initial, code: initial.code ?? "" });
+  const duplicateOf = c.code.trim() ? takenCodes?.get(c.code.trim()) : undefined;
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof ClientInput>(k: K, v: ClientInput[K]) => setC((prev) => ({ ...prev, [k]: v }));
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (duplicateOf) return;
     setBusy(true);
     try {
-      await onSubmit({ ...c, nif: c.nif.toUpperCase().trim(), name: c.name.trim() });
+      await onSubmit({ ...c, code: c.code.trim(), nif: c.nif.toUpperCase().trim(), name: c.name.trim() });
     } finally {
       setBusy(false);
     }
@@ -49,7 +55,16 @@ export function ClientForm({
 
   return (
     <form onSubmit={submit} className="grid gap-4 sm:grid-cols-6">
-      <Field label="Tipo" className="sm:col-span-2">
+      <Field label="Código de cliente" className="sm:col-span-2" hint={duplicateOf ? undefined : "Se propone el siguiente libre; puedes cambiarlo."}>
+        <Input
+          value={c.code}
+          onChange={(e) => set("code", e.target.value)}
+          className={duplicateOf ? "border-destructive font-mono focus:border-destructive" : "font-mono"}
+          aria-invalid={Boolean(duplicateOf)}
+        />
+        {duplicateOf ? <span className="text-sm text-destructive">Este código ya lo tiene «{duplicateOf}».</span> : null}
+      </Field>
+      <Field label="Tipo" className="sm:col-span-4">
         <Select
           value={c.kind}
           onValueChange={(v) => set("kind", v as ClientInput["kind"])}
@@ -59,7 +74,7 @@ export function ClientForm({
           ]}
         />
       </Field>
-      <Field label={c.kind === "empresa" ? "Razón social *" : "Nombre y apellidos *"} className="sm:col-span-4">
+      <Field label={c.kind === "empresa" ? "Razón social *" : "Nombre y apellidos *"} className="sm:col-span-6">
         <Input value={c.name} onChange={(e) => set("name", e.target.value)} required autoFocus={!initial.name} />
       </Field>
       <Field label="NIF / CIF" className="sm:col-span-2">
@@ -92,7 +107,7 @@ export function ClientForm({
         </Field>
       ) : null}
       <div className="sm:col-span-6">
-        <Button type="submit" disabled={busy || !c.name.trim()}>
+        <Button type="submit" disabled={busy || !c.name.trim() || Boolean(duplicateOf)}>
           <Save />
           {busy ? "Guardando…" : submitLabel}
         </Button>

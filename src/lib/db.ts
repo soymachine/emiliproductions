@@ -130,16 +130,24 @@ export async function deleteClient(id: string): Promise<void> {
   await deleteDoc(doc(getDb(), "clients", id));
 }
 
-export async function importClients(clients: Omit<Client, "id" | "createdAt" | "updatedAt">[]): Promise<number> {
+type ClientData = Omit<Client, "id" | "createdAt" | "updatedAt">;
+
+/** Crea los clientes nuevos y actualiza los existentes (por lotes de 400 escrituras). */
+export async function importClients(
+  toCreate: ClientData[],
+  toUpdate: { id: string; patch: Partial<ClientData> }[] = [],
+): Promise<{ created: number; updated: number }> {
   const now = Date.now();
-  for (let i = 0; i < clients.length; i += 400) {
+  const ops: ((b: ReturnType<typeof writeBatch>) => void)[] = [
+    ...toCreate.map((c) => (b: ReturnType<typeof writeBatch>) => b.set(doc(col("clients")), { ...c, createdAt: now, updatedAt: now })),
+    ...toUpdate.map((u) => (b: ReturnType<typeof writeBatch>) => b.update(doc(getDb(), "clients", u.id), { ...u.patch, updatedAt: now })),
+  ];
+  for (let i = 0; i < ops.length; i += 400) {
     const batch = writeBatch(getDb());
-    for (const c of clients.slice(i, i + 400)) {
-      batch.set(doc(col("clients")), { ...c, createdAt: now, updatedAt: now });
-    }
+    ops.slice(i, i + 400).forEach((op) => op(batch));
     await batch.commit();
   }
-  return clients.length;
+  return { created: toCreate.length, updated: toUpdate.length };
 }
 
 export function clientSnapshot(c: Client): ClientSnapshot {

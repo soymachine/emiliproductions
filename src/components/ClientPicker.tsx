@@ -3,7 +3,7 @@
 import { Plus, Search, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { saveClient } from "@/lib/db";
-import { matchesClient } from "@/lib/search";
+import { matchesClient, nextClientCode, takenClientCodes } from "@/lib/search";
 import type { Client } from "@/lib/types";
 import { ClientForm, EMPTY_CLIENT } from "./ClientForm";
 import { Button, Input, Modal } from "./ui";
@@ -35,6 +35,7 @@ export function ClientPicker({
             <p className="flex items-center gap-2 text-lg font-semibold">
               <UserRound className="size-5 text-muted-foreground" />
               {selected.name}
+              {selected.code ? <span className="font-mono text-sm font-normal text-muted-foreground">nº {selected.code}</span> : null}
             </p>
             <p className="text-muted-foreground">
               {[selected.nif, selected.address, [selected.postalCode, selected.city].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}
@@ -72,6 +73,7 @@ export function ClientPicker({
                     setQ("");
                   }}
                 >
+                  {c.code ? <span className="w-16 font-mono text-sm text-muted-foreground">{c.code}</span> : null}
                   <span className="flex-1 font-medium">{c.name}</span>
                   <span className="text-muted-foreground">{c.nif}</span>
                   <span className="text-muted-foreground">{c.city}</span>
@@ -91,7 +93,8 @@ export function ClientPicker({
         <Modal title="Nuevo cliente" onClose={() => setCreating(false)}>
           <ClientForm
             compact
-            initial={{ ...EMPTY_CLIENT, name: q }}
+            initial={{ ...EMPTY_CLIENT, name: q, code: nextClientCode(clients.map((c) => c.code)) }}
+            takenCodes={takenClientCodes(clients)}
             submitLabel="Crear y usar este cliente"
             onSubmit={async (input) => {
               const id = await saveClient(input);

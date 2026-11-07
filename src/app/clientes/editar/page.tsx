@@ -6,7 +6,8 @@ import { FilePlus2, Trash2 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { ClientForm, EMPTY_CLIENT } from "@/components/ClientForm";
 import { Badge, Button, Card, CardTitle, ErrorBox, LinkButton, Loading, Notice, PageHeader } from "@/components/ui";
-import { deleteClient, getClient, listDocsByClient, saveClient } from "@/lib/db";
+import { deleteClient, listClients, listDocsByClient, saveClient } from "@/lib/db";
+import { nextClientCode, takenClientCodes } from "@/lib/search";
 import { formatDate } from "@/lib/dates";
 import { formatEuros } from "@/lib/money";
 import { useAsync } from "@/lib/useAsync";
@@ -25,19 +26,20 @@ function EditClient() {
   const [error, setError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
   const { data, loading } = useAsync(async () => {
-    if (!id) return null;
-    const [client, docs] = await Promise.all([getClient(id), listDocsByClient(id)]);
-    return { client, docs };
+    const [all, docs] = await Promise.all([listClients(), id ? listDocsByClient(id) : Promise.resolve(null)]);
+    return { all, docs, client: id ? all.find((c) => c.id === id) ?? null : null };
   }, [id]);
 
-  if (loading) return <Loading />;
-  const client = data?.client;
+  if (loading || !data) return <Loading />;
+  const client = data.client;
   if (id && !client) return <ErrorBox error="Cliente no encontrado." />;
+  const taken = takenClientCodes(data.all, client?.id);
 
   return (
     <>
       <PageHeader
         title={client ? client.name : "Nuevo cliente"}
+        description={client?.code ? `Cliente nº ${client.code}` : undefined}
         back={{ href: "/clientes/", label: "Clientes" }}
         actions={
           client ? (
@@ -53,7 +55,8 @@ function EditClient() {
       <Card>
         <ClientForm
           key={client?.id ?? "new"}
-          initial={client ?? EMPTY_CLIENT}
+          initial={client ?? { ...EMPTY_CLIENT, code: nextClientCode(data.all.map((c) => c.code)) }}
+          takenCodes={taken}
           onSubmit={async (c) => {
             setError(null);
             try {
@@ -67,7 +70,7 @@ function EditClient() {
         />
       </Card>
 
-      {client && data ? (
+      {client && data.docs ? (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Card className="pb-0 sm:pb-0">
             <CardTitle>Presupuestos</CardTitle>

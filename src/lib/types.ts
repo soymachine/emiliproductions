@@ -29,6 +29,8 @@ export type ClientKind = "particular" | "empresa";
 
 export interface Client {
   id: string;
+  /** Código o número de cliente (se conserva el de InGnio al importar). Texto para no perder ceros ni letras. */
+  code: string;
   kind: ClientKind;
   name: string;
   nif: string;
