@@ -6,6 +6,7 @@ import { FileText } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Badge, Button, Card, ErrorBox, Loading, PageHeader } from "@/components/ui";
 import { PaymentsCard } from "@/components/PaymentsCard";
+import { AnnotationsCard } from "@/components/AnnotationsCard";
 import { useIsViewer } from "@/components/AuthGate";
 import { getInvoice, getSettings } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
@@ -136,6 +137,7 @@ function InvoiceView() {
             {busy ? "Generando…" : "Ver PDF"}
           </Button>
           <PaymentsCard invoice={inv} onChange={reload} readOnly={viewer} />
+          <AnnotationsCard invoice={inv} readOnly={viewer} />
         </aside>
       </div>
       {preview ? <PdfPreview pdf={preview} onClose={() => setPreview(null)} /> : null}

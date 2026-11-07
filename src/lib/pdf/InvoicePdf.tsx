@@ -47,10 +47,10 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
           </Text>
         ) : null}
 
-        {invoice.notes ? (
+        {invoice.annotations?.trim() ? (
           <View style={s.notes} wrap={false}>
-            <Text style={s.boxLabel}>Observaciones</Text>
-            <Text>{invoice.notes}</Text>
+            <Text style={s.boxLabel}>Anotaciones</Text>
+            <Text>{invoice.annotations.trim()}</Text>
           </View>
         ) : null}
         {company.invoiceFooter || company.iban ? (

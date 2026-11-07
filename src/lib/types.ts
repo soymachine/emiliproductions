@@ -140,6 +140,8 @@ export interface Invoice extends Totals {
   status: InvoiceStatus;
   /** Fecha del cobro que completa el total (null si queda algo pendiente). */
   paidAt: string | null;
+  /** Anotaciones de la factura (salen en el PDF encima de la forma de pago). Se pueden cambiar después. */
+  annotations?: string;
   /** Cobros registrados. Las facturas antiguas pueden no tenerlo (ver lib/payments.ts). */
   payments?: Payment[];
   paidCents?: number;

@@ -173,15 +173,15 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
               <Input type="number" min={1} value={s.quoteValidityDays} onChange={(e) => set("quoteValidityDays", Number(e.target.value) || 30)} />
             </Field>
             <Field
-              label="Observaciones por defecto de los presupuestos"
+              label="Observaciones de los presupuestos"
               className="sm:col-span-2"
-              hint="Se ponen en cada presupuesto nuevo y allí se pueden cambiar. {DIES} = días de validez · {IBAN} = la cuenta de arriba."
+              hint="Salen en el PDF de todos los presupuestos (no se editan en cada uno). {DIES} = días de validez · {IBAN} = la cuenta de arriba."
             >
               <Textarea rows={5} value={s.quoteNotesTemplate} onChange={(e) => set("quoteNotesTemplate", e.target.value)} />
             </Field>
             {s.quoteNotesTemplate.trim() ? (
               <div className="rounded-lg border bg-muted/40 p-3 text-sm sm:col-span-2">
-                <p className="mb-1 font-medium text-muted-foreground">Así quedará en un presupuesto nuevo:</p>
+                <p className="mb-1 font-medium text-muted-foreground">Así saldrá en los presupuestos:</p>
                 <p className="whitespace-pre-line">{fillQuoteNotes(s)}</p>
               </div>
             ) : null}

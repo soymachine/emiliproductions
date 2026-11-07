@@ -259,7 +259,7 @@ export async function getInvoice(id: string): Promise<Invoice | null> {
  * Convierte un presupuesto en factura: número correlativo del año, copia de cliente y líneas
  * (sin dibujos), y marca el presupuesto como facturado. Todo en una única transacción.
  */
-export async function convertQuoteToInvoice(quoteId: string, date: string): Promise<string> {
+export async function convertQuoteToInvoice(quoteId: string, date: string, annotations = ""): Promise<string> {
   const db = getDb();
   const quoteRef = doc(db, "quotes", quoteId);
   const invoiceRef = doc(col("invoices"));
@@ -289,7 +289,9 @@ export async function convertQuoteToInvoice(quoteId: string, date: string): Prom
         color: l.drawing.kind !== "ninguno" ? frameColorLabel(l.drawing.frameColor) : "",
       })),
       vatRate: q.vatRate,
-      notes: q.notes,
+      // Las observaciones del presupuesto no pasan a la factura; la factura tiene sus propias anotaciones.
+      notes: "",
+      annotations: annotations.trim(),
       ...computeTotals(q.lines, q.vatRate),
       status: "pendiente",
       paidAt: null,
@@ -302,6 +304,11 @@ export async function convertQuoteToInvoice(quoteId: string, date: string): Prom
     tx.update(quoteRef, { status: "facturado", invoiceId: invoiceRef.id, updatedAt: Date.now() });
   });
   return invoiceRef.id;
+}
+
+/** Cambia las anotaciones de una factura (no afectan a los importes). */
+export async function setInvoiceAnnotations(invoiceId: string, annotations: string): Promise<void> {
+  await updateDoc(doc(getDb(), "invoices", invoiceId), { annotations: annotations.trim() });
 }
 
 /** Registra un cobro (total o parcial) de una factura. */

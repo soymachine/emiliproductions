@@ -120,6 +120,7 @@ function QuoteEditor({
   const [picking, setPicking] = useState(false);
   const [converting, setConverting] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState(todayIso());
+  const [annotations, setAnnotations] = useState("");
   const [preview, setPreview] = useState<BuiltPdf | null>(null);
   // Se incrementa al aplicar un descuento para que cada línea vuelva a mostrar su precio.
   const [linesVersion, setLinesVersion] = useState(0);
@@ -190,7 +191,7 @@ function QuoteEditor({
     await run("convert", async () => {
       const id = await save();
       if (!id) return;
-      const invoiceId = await convertQuoteToInvoice(id, invoiceDate);
+      const invoiceId = await convertQuoteToInvoice(id, invoiceDate, annotations);
       router.push(`/facturas/ver/?id=${invoiceId}`);
     });
   }
@@ -265,9 +266,21 @@ function QuoteEditor({
           ) : null}
 
           <Card>
-            <Field label="Observaciones (aparecen en el PDF)" hint={readOnly ? undefined : "El texto inicial se cambia en Ajustes → Observaciones por defecto."}>
-              <Textarea rows={5} value={q.notes} onChange={(e) => update({ notes: e.target.value })} disabled={readOnly} />
-            </Field>
+            <CardTitle
+              description="Salen en el PDF de todos los presupuestos. Se cambian en Ajustes."
+              action={
+                !viewer ? (
+                  <Link href="/ajustes/" className="text-sm font-medium text-primary hover:underline">
+                    Cambiar en Ajustes
+                  </Link>
+                ) : null
+              }
+            >
+              Observaciones
+            </CardTitle>
+            <p className="whitespace-pre-line rounded-lg bg-muted/60 p-4 text-muted-foreground">
+              {fillQuoteNotes(settings) || "Sin observaciones."}
+            </p>
           </Card>
         </div>
 
@@ -394,6 +407,9 @@ function QuoteEditor({
           </p>
           <Field label="Fecha de la factura" className="mb-4">
             <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
+          </Field>
+          <Field label="Anotaciones (aparecen en la factura, encima de la forma de pago)" className="mb-4" hint="Opcional. Se pueden cambiar después desde la factura.">
+            <Textarea rows={3} value={annotations} onChange={(e) => setAnnotations(e.target.value)} />
           </Field>
           <p className="tabular mb-4 text-xl font-bold">Total: {formatEuros(totals.totalCents)}</p>
           <Button onClick={convert} disabled={busy !== null}>

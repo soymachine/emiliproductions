@@ -28,12 +28,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Las facturas emitidas no se pueden borrar ni modificar: solo se registran sus cobros.
+    // Las facturas emitidas no se pueden borrar ni modificar: solo se registran sus cobros y anotaciones.
     match /invoices/{id} {
       allow read: if canRead();
       allow create: if isOwner();
       allow update: if isOwner()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paidAt', 'payments', 'paidCents']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paidAt', 'payments', 'paidCents', 'annotations']);
       allow delete: if false;
     }
   }

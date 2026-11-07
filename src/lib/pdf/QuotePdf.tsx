@@ -4,6 +4,7 @@ import { formatDate } from "../dates";
 import { formatEuros, lineTotalCents } from "../money";
 import type { CompanySettings, Quote } from "../types";
 import { frameColorLabel } from "../drawings/colors";
+import { fillQuoteNotes } from "../defaults";
 import { CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
 
 const COL = { drawing: 115, desc: 1, qty: 40, price: 70, amount: 75 };
@@ -75,10 +76,11 @@ export function QuotePdf({ quote, company, layout = "compact" }: { quote: Quote;
 
         <TotalsBlock totals={quote} vatRate={quote.vatRate} />
 
-        {quote.notes ? (
+        {/* Las observaciones salen siempre del texto de Ajustes (no se editan en cada presupuesto). */}
+        {fillQuoteNotes(company).trim() ? (
           <View style={s.notes} wrap={false}>
             <Text style={s.boxLabel}>Observaciones</Text>
-            <Text>{quote.notes}</Text>
+            <Text>{fillQuoteNotes(company).trim()}</Text>
           </View>
         ) : null}
 
