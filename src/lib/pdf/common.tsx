@@ -7,14 +7,14 @@ export const ACCENT = "#1e3a8a";
 
 export const s = StyleSheet.create({
   page: { padding: 36, paddingBottom: 56, fontSize: 9.5, fontFamily: "Helvetica", color: "#111" },
-  header: { flexDirection: "row", justifyContent: "space-between", marginBottom: 18 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 18 },
   logo: { maxWidth: 150, maxHeight: 70, objectFit: "contain", marginBottom: 6 },
   companyName: { fontSize: 13, fontFamily: "Helvetica-Bold", color: ACCENT, marginBottom: 3 },
   muted: { color: "#555" },
   docTitle: { fontSize: 20, fontFamily: "Helvetica-Bold", color: ACCENT, textAlign: "right" },
   docMeta: { textAlign: "right", marginTop: 4 },
   boxes: { flexDirection: "row", gap: 12, marginBottom: 16 },
-  box: { flex: 1, border: "1pt solid #cbd5e1", borderRadius: 4, padding: 8 },
+  box: { border: "1pt solid #cbd5e1", borderRadius: 4, padding: 8 },
   boxLabel: { fontSize: 7.5, color: "#64748b", textTransform: "uppercase", marginBottom: 3 },
   bold: { fontFamily: "Helvetica-Bold" },
   thead: { flexDirection: "row", backgroundColor: ACCENT, color: "#fff", paddingVertical: 5, paddingHorizontal: 6, fontFamily: "Helvetica-Bold", fontSize: 8.5 },
@@ -27,18 +27,25 @@ export const s = StyleSheet.create({
   footer: { position: "absolute", bottom: 24, left: 36, right: 36, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: "#64748b" },
 });
 
+/**
+ * Cabecera del documento: a la izquierda logo y datos de la empresa; a la derecha el título
+ * (PRESUPUESTO / FACTURA), número y fechas y, debajo, los datos del cliente.
+ * Solo sale en la primera página (no lleva `fixed`).
+ */
 export function CompanyHeader({
   company,
   title,
   meta,
+  client,
 }: {
   company: CompanySettings;
   title: string;
   meta: { label: string; value: string }[];
+  client: ClientSnapshot;
 }) {
   return (
-    <View style={s.header} fixed>
-      <View style={{ maxWidth: 300 }}>
+    <View style={s.header}>
+      <View style={{ flex: 1, maxWidth: 270 }}>
         {company.logoDataUrl ? <Image src={company.logoDataUrl} style={s.logo} /> : null}
         <Text style={s.companyName}>{company.name}</Text>
         <Text>NIF: {company.nif}</Text>
@@ -51,7 +58,7 @@ export function CompanyHeader({
           {[company.phone, company.email].filter(Boolean).join(" · ")}
         </Text>
       </View>
-      <View>
+      <View style={{ width: 245 }}>
         <Text style={s.docTitle}>{title}</Text>
         {meta.map((m) => (
           <Text key={m.label} style={s.docMeta}>
@@ -59,6 +66,9 @@ export function CompanyHeader({
             <Text style={s.bold}>{m.value}</Text>
           </Text>
         ))}
+        <View style={{ marginTop: 10 }}>
+          <ClientBox client={client} />
+        </View>
       </View>
     </View>
   );

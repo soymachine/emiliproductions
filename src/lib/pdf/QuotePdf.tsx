@@ -4,7 +4,7 @@ import { formatDate } from "../dates";
 import { formatEuros, lineTotalCents } from "../money";
 import type { CompanySettings, Quote } from "../types";
 import { frameColorLabel } from "../drawings/colors";
-import { ClientBox, CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
+import { CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
 
 const COL = { drawing: 115, desc: 1, qty: 40, price: 70, amount: 75 };
 
@@ -18,6 +18,7 @@ export function QuotePdf({ quote, company, layout = "compact" }: { quote: Quote;
       <Page size="A4" style={s.page}>
         <CompanyHeader
           company={company}
+          client={quote.client}
           title="PRESUPUESTO"
           meta={[
             { label: "Nº", value: quote.number },
@@ -25,9 +26,6 @@ export function QuotePdf({ quote, company, layout = "compact" }: { quote: Quote;
             { label: "Válido hasta", value: formatDate(quote.validUntil) },
           ]}
         />
-        <View style={s.boxes}>
-          <ClientBox client={quote.client} />
-        </View>
 
         <View style={s.thead}>
           {!large ? <Text style={{ width: COL.drawing }}>Dibujo</Text> : null}

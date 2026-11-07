@@ -2,7 +2,7 @@ import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { formatDate } from "../dates";
 import { formatEuros, lineTotalCents } from "../money";
 import type { CompanySettings, Invoice } from "../types";
-import { ClientBox, CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
+import { CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
 
 const COL = { desc: 1, qty: 45, price: 80, amount: 85 };
 
@@ -12,6 +12,7 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
       <Page size="A4" style={s.page}>
         <CompanyHeader
           company={company}
+          client={invoice.client}
           title="FACTURA"
           meta={[
             { label: "Nº", value: invoice.number },
@@ -19,9 +20,6 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
             { label: "Presupuesto", value: invoice.quoteNumber },
           ]}
         />
-        <View style={s.boxes}>
-          <ClientBox client={invoice.client} />
-        </View>
 
         <View style={s.thead}>
           <Text style={{ flex: COL.desc }}>Descripción</Text>
