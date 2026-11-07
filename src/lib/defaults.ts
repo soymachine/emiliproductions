@@ -17,6 +17,8 @@ export const DEFAULT_SETTINGS: CompanySettings = {
   quoteConditions:
     "Presupuesto válido durante el plazo indicado. Forma de pago: 50% a la aceptación y 50% a la finalización de la instalación. Incluye suministro e instalación.",
   invoiceFooter: "Forma de pago: transferencia bancaria a la cuenta indicada.",
+  quoteNumberFormat: "P-{AAAA}-{NNN}",
+  invoiceNumberFormat: "F-{AAAA}-{NNN}",
 };
 
 export function drawing(

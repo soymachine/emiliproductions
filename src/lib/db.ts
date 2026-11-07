@@ -66,6 +66,45 @@ export async function ensureInitialData(): Promise<void> {
   await batch.commit();
 }
 
+// ---------- Numeración ----------
+
+export type CounterKind = "quote" | "invoice";
+
+const counterRef = (kind: CounterKind, year: number) => doc(getDb(), "counters", `${kind}-${year}`);
+
+/** Último número usado en ese año (0 si todavía no hay ninguno). */
+export async function getLastNumber(kind: CounterKind, year: number): Promise<number> {
+  const snap = await getDoc(counterRef(kind, year));
+  return (snap.data()?.last as number | undefined) ?? 0;
+}
+
+/**
+ * Fija el último número usado (el siguiente documento será este + 1).
+ * No deja bajarlo por debajo de lo que ya se ha numerado en la app, para no repetir números.
+ */
+export async function setLastNumber(kind: CounterKind, year: number, last: number): Promise<void> {
+  if (!Number.isInteger(last) || last < 0) throw new Error("El número debe ser un entero igual o mayor que 0.");
+  const coll = kind === "invoice" ? "invoices" : "quotes";
+  const issued = await getDocs(
+    query(col(coll), where("date", ">=", `${year}-01-01`), where("date", "<=", `${year}-12-31`)),
+  );
+  if (issued.size > 0) {
+    const cur = await getLastNumber(kind, year);
+    if (last < cur) {
+      throw new Error(
+        `Ya se han creado ${kind === "invoice" ? "facturas" : "presupuestos"} de ${year} en la app hasta el número ${cur}. ` +
+          "Solo se puede subir la numeración, no bajarla, para no repetir números.",
+      );
+    }
+  }
+  await setDoc(counterRef(kind, year), { last });
+}
+
+async function numberFormats() {
+  const s = await getSettings();
+  return { quote: s.quoteNumberFormat, invoice: s.invoiceNumberFormat };
+}
+
 // ---------- Clientes ----------
 
 export async function listClients(): Promise<Client[]> {
@@ -165,15 +204,16 @@ export async function saveQuote(draft: QuoteDraft): Promise<string> {
   const db = getDb();
   const ref = doc(col("quotes"));
   const year = yearOf(draft.date);
-  const counterRef = doc(db, "counters", `quote-${year}`);
+  const cRef = counterRef("quote", year);
+  const formats = await numberFormats();
   await runTransaction(db, async (tx) => {
-    const c = await tx.get(counterRef);
+    const c = await tx.get(cRef);
     const next = ((c.data()?.last as number | undefined) ?? 0) + 1;
-    tx.set(counterRef, { last: next });
+    tx.set(cRef, { last: next });
     tx.set(ref, {
       ...stripId(draft),
       ...totals,
-      number: formatDocNumber("P", year, next),
+      number: formatDocNumber(formats.quote, year, next),
       invoiceId: null,
       createdAt: now,
       updatedAt: now,
@@ -213,16 +253,17 @@ export async function convertQuoteToInvoice(quoteId: string, date: string): Prom
   const quoteRef = doc(db, "quotes", quoteId);
   const invoiceRef = doc(col("invoices"));
   const year = yearOf(date);
-  const counterRef = doc(db, "counters", `invoice-${year}`);
+  const cRef = counterRef("invoice", year);
+  const formats = await numberFormats();
   await runTransaction(db, async (tx) => {
     const qs = await tx.get(quoteRef);
     if (!qs.exists()) throw new Error("Presupuesto no encontrado.");
     const q = qs.data() as Quote;
     if (q.invoiceId) throw new Error("Este presupuesto ya tiene factura.");
-    const c = await tx.get(counterRef);
+    const c = await tx.get(cRef);
     const next = ((c.data()?.last as number | undefined) ?? 0) + 1;
     const invoice: Omit<Invoice, "id"> = {
-      number: formatDocNumber("F", year, next),
+      number: formatDocNumber(formats.invoice, year, next),
       date,
       quoteId,
       quoteNumber: q.number,
@@ -242,7 +283,7 @@ export async function convertQuoteToInvoice(quoteId: string, date: string): Prom
       paidAt: null,
       createdAt: Date.now(),
     };
-    tx.set(counterRef, { last: next });
+    tx.set(cRef, { last: next });
     tx.set(invoiceRef, invoice);
     tx.update(quoteRef, { status: "facturado", invoiceId: invoiceRef.id, updatedAt: Date.now() });
   });

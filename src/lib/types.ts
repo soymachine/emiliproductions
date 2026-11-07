@@ -18,6 +18,10 @@ export interface CompanySettings {
   /** Días de validez por defecto de un presupuesto. */
   quoteValidityDays: number;
   quoteConditions: string;
+  /** Plantilla del número de presupuesto, p. ej. "P-{AAAA}-{NNN}". */
+  quoteNumberFormat: string;
+  /** Plantilla del número de factura, p. ej. "F-{AAAA}-{NNN}". */
+  invoiceNumberFormat: string;
   invoiceFooter: string;
 }
 

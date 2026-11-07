@@ -25,7 +25,24 @@ export function yearOf(iso: string): number {
   return Number(iso.slice(0, 4));
 }
 
-/** Numeración correlativa anual: P-2026-001, F-2026-001 */
-export function formatDocNumber(prefix: "P" | "F", year: number, n: number): string {
-  return `${prefix}-${year}-${String(n).padStart(3, "0")}`;
+/**
+ * Formatea un número de documento según una plantilla:
+ * - {AAAA}: año con 4 cifras (2026)
+ * - {AA}: año con 2 cifras (26)
+ * - {N}, {NN}, {NNN}…: número correlativo, rellenado con ceros hasta esa cantidad de cifras
+ * Ej.: "F-{AAAA}-{NNN}" → F-2026-001 · "{AA}/{NNNN}" → 26/0123
+ */
+export function formatDocNumber(template: string, year: number, n: number): string {
+  let out = (template || "{NNN}").replace(/\{AAAA\}/g, String(year)).replace(/\{AA\}/g, String(year).slice(-2));
+  let replaced = false;
+  out = out.replace(/\{(N+)\}/g, (_, ns: string) => {
+    replaced = true;
+    return String(n).padStart(ns.length, "0");
+  });
+  return replaced ? out : out + String(n);
+}
+
+/** Comprueba que la plantilla incluye el número correlativo. */
+export function isValidNumberFormat(template: string): boolean {
+  return /\{N+\}/.test(template);
 }

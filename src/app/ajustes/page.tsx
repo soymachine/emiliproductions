@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { NumberingCard } from "@/components/NumberingCard";
 import { Button, Card, ErrorBox, Field, Input, Loading, PageHeader, Select, Textarea } from "@/components/ui";
 import { exportBackup, getSettings, saveSettings } from "@/lib/db";
-import { todayIso } from "@/lib/dates";
+import { isValidNumberFormat, todayIso } from "@/lib/dates";
 import { useAsync } from "@/lib/useAsync";
 import type { CompanySettings, VatRate } from "@/lib/types";
 
@@ -48,8 +49,12 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
   };
 
   async function save() {
-    setBusy(true);
     setError(null);
+    if (!isValidNumberFormat(s.invoiceNumberFormat) || !isValidNumberFormat(s.quoteNumberFormat)) {
+      setError(new Error("El formato de numeración tiene que incluir el número, por ejemplo {NNN}."));
+      return;
+    }
+    setBusy(true);
     try {
       await saveSettings(s);
       setSaved(true);
@@ -165,6 +170,11 @@ function SettingsForm({ initial }: { initial: CompanySettings }) {
             </Field>
           </div>
         </Card>
+
+        <NumberingCard
+          formats={{ invoice: s.invoiceNumberFormat, quote: s.quoteNumberFormat }}
+          onFormatChange={(kind, v) => set(kind === "invoice" ? "invoiceNumberFormat" : "quoteNumberFormat", v)}
+        />
 
         <div className="flex flex-wrap items-center gap-4">
           <Button onClick={save} disabled={busy}>

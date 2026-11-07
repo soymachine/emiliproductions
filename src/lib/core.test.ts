@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeTotals, formatEuros, parseEurosToCents } from "./money";
-import { addDaysIso, formatDate, formatDocNumber } from "./dates";
+import { addDaysIso, formatDate, formatDocNumber, isValidNumberFormat } from "./dates";
 import { generateDrawing } from "./drawings/generate";
 import { drawing, SEED_ARTICLE_TYPES } from "./defaults";
 import { decodeText, guessKind, guessMapping, rowsToClients } from "./import/clients";
@@ -37,8 +37,13 @@ describe("money", () => {
 
 describe("fechas y numeración", () => {
   it("numera correlativamente", () => {
-    expect(formatDocNumber("P", 2026, 1)).toBe("P-2026-001");
-    expect(formatDocNumber("F", 2026, 1234)).toBe("F-2026-1234");
+    expect(formatDocNumber("P-{AAAA}-{NNN}", 2026, 1)).toBe("P-2026-001");
+    expect(formatDocNumber("F-{AAAA}-{NNN}", 2026, 1234)).toBe("F-2026-1234");
+    expect(formatDocNumber("{AA}/{NNNN}", 2026, 123)).toBe("26/0123");
+    expect(formatDocNumber("FAC{AAAA}{NNNNN}", 2027, 7)).toBe("FAC202700007");
+    expect(formatDocNumber("F-", 2026, 5)).toBe("F-5");
+    expect(isValidNumberFormat("F-{AAAA}-{NNN}")).toBe(true);
+    expect(isValidNumberFormat("F-{AAAA}")).toBe(false);
   });
   it("suma días y formatea", () => {
     expect(addDaysIso("2026-12-20", 30)).toBe("2027-01-19");
