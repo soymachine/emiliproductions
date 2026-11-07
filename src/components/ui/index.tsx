@@ -208,6 +208,7 @@ const badgeColors: Record<string, string> = {
   "sin facturar": "bg-slate-50 text-slate-600 ring-slate-200",
   pendiente: "bg-amber-50 text-amber-800 ring-amber-200",
   pagada: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  parcial: "bg-sky-50 text-sky-700 ring-sky-200",
 };
 
 const badgeDots: Record<string, string> = {
@@ -219,6 +220,7 @@ const badgeDots: Record<string, string> = {
   "sin facturar": "bg-slate-300",
   pendiente: "bg-amber-500",
   pagada: "bg-emerald-500",
+  parcial: "bg-sky-500",
 };
 
 export function Badge({ status }: { status: string }) {

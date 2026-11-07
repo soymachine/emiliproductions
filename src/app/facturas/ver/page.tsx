@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CircleCheck, FileText, Undo2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { Suspense, useState } from "react";
-import { Badge, Button, Card, ErrorBox, Field, Input, Loading, PageHeader } from "@/components/ui";
-import { getInvoice, getSettings, setInvoicePaid } from "@/lib/db";
-import { formatDate, todayIso } from "@/lib/dates";
+import { Badge, Button, Card, ErrorBox, Loading, PageHeader } from "@/components/ui";
+import { PaymentsCard } from "@/components/PaymentsCard";
+import { getInvoice, getSettings } from "@/lib/db";
+import { formatDate } from "@/lib/dates";
 import { formatEuros, lineTotalCents } from "@/lib/money";
 import { buildInvoicePdf, type BuiltPdf } from "@/lib/pdf/download";
 import { PdfPreview } from "@/components/PdfPreview";
@@ -28,7 +29,6 @@ function InvoiceView() {
   }, [id]);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<unknown>(null);
-  const [paidDate, setPaidDate] = useState(todayIso());
   const [preview, setPreview] = useState<BuiltPdf | null>(null);
 
   if (loading) return <Loading />;
@@ -133,40 +133,7 @@ function InvoiceView() {
             <FileText />
             {busy ? "Generando…" : "Ver PDF"}
           </Button>
-          {inv.status === "pendiente" ? (
-            <Card className="flex flex-col gap-3">
-              <Field label="Fecha de cobro">
-                <Input type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} />
-              </Field>
-              <Button
-                variant="secondary"
-                disabled={busy}
-                onClick={() =>
-                  act(async () => {
-                    await setInvoicePaid(inv.id, paidDate);
-                    await reload();
-                  })
-                }
-              >
-                <CircleCheck className="text-emerald-600" />
-                Marcar como pagada
-              </Button>
-            </Card>
-          ) : (
-            <Button
-              variant="ghost"
-              disabled={busy}
-              onClick={() =>
-                act(async () => {
-                  await setInvoicePaid(inv.id, null);
-                  await reload();
-                })
-              }
-            >
-              <Undo2 />
-              Marcar como pendiente
-            </Button>
-          )}
+          <PaymentsCard invoice={inv} onChange={reload} />
         </aside>
       </div>
       {preview ? <PdfPreview pdf={preview} onClose={() => setPreview(null)} /> : null}

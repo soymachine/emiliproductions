@@ -11,6 +11,7 @@ import { nextClientCode, takenClientCodes } from "@/lib/search";
 import { formatDate } from "@/lib/dates";
 import { formatEuros } from "@/lib/money";
 import { useAsync } from "@/lib/useAsync";
+import { paidCentsOf, statusFor } from "@/lib/payments";
 
 export default function Page() {
   return (
@@ -98,7 +99,7 @@ function EditClient() {
                     <span className="font-mono text-sm">{i.number}</span>
                     <span className="flex-1 text-muted-foreground">{formatDate(i.date)}</span>
                     <span className="tabular">{formatEuros(i.totalCents)}</span>
-                    <Badge status={i.status} />
+                    <Badge status={statusFor(i.totalCents, paidCentsOf(i))} />
                   </Link>
                 </li>
               ))}

@@ -110,7 +110,18 @@ export interface Quote extends Totals {
 
 export type InvoiceLine = Omit<QuoteLine, "drawing" | "articleTypeId" | "id">;
 
-export type InvoiceStatus = "pendiente" | "pagada";
+export type InvoiceStatus = "pendiente" | "parcial" | "pagada";
+
+export type PaymentMethod = "transferencia" | "efectivo" | "tarjeta" | "bizum" | "otro";
+
+/** Un cobro (total o parcial) de una factura. */
+export interface Payment {
+  id: string;
+  date: string; // YYYY-MM-DD
+  amountCents: number;
+  method: PaymentMethod;
+  note: string;
+}
 
 export interface Invoice extends Totals {
   id: string;
@@ -124,6 +135,10 @@ export interface Invoice extends Totals {
   vatRate: VatRate;
   notes: string;
   status: InvoiceStatus;
+  /** Fecha del cobro que completa el total (null si queda algo pendiente). */
   paidAt: string | null;
+  /** Cobros registrados. Las facturas antiguas pueden no tenerlo (ver lib/payments.ts). */
+  payments?: Payment[];
+  paidCents?: number;
   createdAt: number;
 }

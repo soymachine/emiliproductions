@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyDiscount, computeTotals, formatEuros, parseEurosToCents, parsePercent } from "./money";
-import { addDaysIso, formatDate, formatDocNumber, isValidNumberFormat } from "./dates";
+import { addDaysIso, formatDate, formatDocNumber, isValidNumberFormat, rangePreset } from "./dates";
+import { paidCentsOf, paymentsOf, pendingCentsOf, withPayment, withoutPayment } from "./payments";
 import { generateDrawing } from "./drawings/generate";
 import { DEFAULT_SETTINGS, drawing, fillQuoteNotes, SEED_ARTICLE_TYPES } from "./defaults";
 import { decodeText, guessKind, guessMapping, planImport, rowsToClients, type ImportedClient } from "./import/clients";
@@ -223,5 +224,52 @@ describe("descuento", () => {
     expect(parsePercent("0")).toBeNull();
     expect(parsePercent("abc")).toBeNull();
     expect(parsePercent("150")).toBeNull();
+  });
+});
+
+describe("cobros de facturas", () => {
+  const inv = { totalCents: 190575, status: "pendiente" as const, paidAt: null, payments: undefined };
+  const pay = (id: string, date: string, amountCents: number) => ({ id, date, amountCents, method: "bizum" as const, note: "" });
+
+  it("pasa de pendiente a parcial y a pagada", () => {
+    const a = withPayment(inv, pay("1", "2026-11-07", 50000));
+    expect(a.status).toBe("parcial");
+    expect(a.paidAt).toBeNull();
+    expect(pendingCentsOf({ ...inv, ...a })).toBe(140575);
+    const b = withPayment({ ...inv, ...a }, pay("2", "2026-11-20", 140575));
+    expect(b.status).toBe("pagada");
+    expect(b.paidAt).toBe("2026-11-20");
+    expect(b.paidCents).toBe(190575);
+  });
+
+  it("no deja cobrar de más ni importes vacíos", () => {
+    expect(() => withPayment(inv, pay("1", "2026-11-07", 190576))).toThrow();
+    expect(() => withPayment(inv, pay("1", "2026-11-07", 0))).toThrow();
+  });
+
+  it("al borrar un cobro vuelve a parcial", () => {
+    const a = withPayment(inv, pay("1", "2026-11-07", 90575));
+    const b = withPayment({ ...inv, ...a }, pay("2", "2026-11-08", 100000));
+    const c = withoutPayment({ ...inv, ...b }, "2");
+    expect(c.status).toBe("parcial");
+    expect(c.paidCents).toBe(90575);
+  });
+
+  it("lee las facturas antiguas marcadas como pagadas", () => {
+    const old = { totalCents: 1000, status: "pagada" as const, paidAt: "2026-05-01" };
+    expect(paymentsOf(old)).toHaveLength(1);
+    expect(paidCentsOf(old)).toBe(1000);
+    expect(pendingCentsOf(old)).toBe(0);
+  });
+});
+
+describe("rangos de fechas", () => {
+  it("calcula los atajos", () => {
+    expect(rangePreset("mes", "2026-11-07")).toEqual({ from: "2026-11-01", to: "2026-11-30" });
+    expect(rangePreset("trimestre", "2026-11-07")).toEqual({ from: "2026-10-01", to: "2026-12-31" });
+    expect(rangePreset("trimestre", "2026-02-10")).toEqual({ from: "2026-01-01", to: "2026-03-31" });
+    expect(rangePreset("año", "2026-11-07")).toEqual({ from: "2026-01-01", to: "2026-12-31" });
+    expect(rangePreset("año-pasado", "2026-11-07")).toEqual({ from: "2025-01-01", to: "2025-12-31" });
+    expect(rangePreset("mes", "2028-02-15").to).toBe("2028-02-29");
   });
 });

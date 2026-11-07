@@ -8,6 +8,7 @@ import { Badge, Card, CardTitle, Loading } from "@/components/ui";
 import { listInvoices, listQuotes } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
 import { formatEuros } from "@/lib/money";
+import { pendingCentsOf } from "@/lib/payments";
 import { useAsync } from "@/lib/useAsync";
 
 function greeting() {
@@ -54,8 +55,8 @@ export default function Home() {
   });
 
   const year = String(new Date().getFullYear());
-  const pending = data?.invoices.filter((i) => i.status === "pendiente") ?? [];
-  const pendingTotal = pending.reduce((s, i) => s + i.totalCents, 0);
+  const pending = data?.invoices.filter((i) => pendingCentsOf(i) > 0) ?? [];
+  const pendingTotal = pending.reduce((s, i) => s + pendingCentsOf(i), 0);
   const openQuotes = data?.quotes.filter((q) => !q.invoiceId) ?? [];
   const billedYear = (data?.invoices ?? []).filter((i) => i.date.startsWith(year)).reduce((s, i) => s + i.subtotalCents, 0);
 
@@ -153,7 +154,12 @@ export default function Home() {
                         {i.number} · {formatDate(i.date)}
                       </span>
                     </span>
-                    <span className="tabular font-semibold">{formatEuros(i.totalCents)}</span>
+                    <span className="tabular text-right">
+                      <span className="block font-semibold">{formatEuros(pendingCentsOf(i))}</span>
+                      {pendingCentsOf(i) < i.totalCents ? (
+                        <span className="block text-xs text-muted-foreground">de {formatEuros(i.totalCents)}</span>
+                      ) : null}
+                    </span>
                   </Link>
                 </li>
               ))}

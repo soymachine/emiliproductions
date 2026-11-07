@@ -46,3 +46,24 @@ export function formatDocNumber(template: string, year: number, n: number): stri
 export function isValidNumberFormat(template: string): boolean {
   return /\{N+\}/.test(template);
 }
+
+export type RangePreset = "mes" | "trimestre" | "año" | "año-pasado";
+
+/** Rango de fechas (ISO, ambos incluidos) de los atajos del filtro. */
+export function rangePreset(preset: RangePreset, todayIsoStr: string = todayIso()): { from: string; to: string } {
+  const [y, m] = todayIsoStr.split("-").map(Number);
+  const lastDay = (yy: number, mm: number) => toIso(new Date(yy, mm, 0)); // mm 1-12 → último día del mes
+  const pad = (n: number) => String(n).padStart(2, "0");
+  switch (preset) {
+    case "mes":
+      return { from: `${y}-${pad(m)}-01`, to: lastDay(y, m) };
+    case "trimestre": {
+      const q0 = Math.floor((m - 1) / 3) * 3 + 1;
+      return { from: `${y}-${pad(q0)}-01`, to: lastDay(y, q0 + 2) };
+    }
+    case "año":
+      return { from: `${y}-01-01`, to: `${y}-12-31` };
+    case "año-pasado":
+      return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` };
+  }
+}

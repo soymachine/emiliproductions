@@ -24,8 +24,10 @@ import type {
   ClientSnapshot,
   CompanySettings,
   Invoice,
+  Payment,
   Quote,
 } from "./types";
+import { withPayment, withoutPayment } from "./payments";
 
 const col = (name: string) => collection(getDb(), name);
 
@@ -289,6 +291,8 @@ export async function convertQuoteToInvoice(quoteId: string, date: string): Prom
       ...computeTotals(q.lines, q.vatRate),
       status: "pendiente",
       paidAt: null,
+      payments: [],
+      paidCents: 0,
       createdAt: Date.now(),
     };
     tx.set(cRef, { last: next });
@@ -298,8 +302,25 @@ export async function convertQuoteToInvoice(quoteId: string, date: string): Prom
   return invoiceRef.id;
 }
 
-export async function setInvoicePaid(id: string, paidAt: string | null): Promise<void> {
-  await updateDoc(doc(getDb(), "invoices", id), { status: paidAt ? "pagada" : "pendiente", paidAt });
+/** Registra un cobro (total o parcial) de una factura. */
+export async function addInvoicePayment(invoiceId: string, payment: Omit<Payment, "id">): Promise<void> {
+  const db = getDb();
+  const ref = doc(db, "invoices", invoiceId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("Factura no encontrada.");
+    tx.update(ref, withPayment(snap.data() as Invoice, { ...payment, id: newId() }));
+  });
+}
+
+export async function removeInvoicePayment(invoiceId: string, paymentId: string): Promise<void> {
+  const db = getDb();
+  const ref = doc(db, "invoices", invoiceId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("Factura no encontrada.");
+    tx.update(ref, withoutPayment(snap.data() as Invoice, paymentId));
+  });
 }
 
 // ---------- Copia de seguridad ----------
