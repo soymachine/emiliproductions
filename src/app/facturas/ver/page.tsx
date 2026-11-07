@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CircleCheck, Download, Undo2 } from "lucide-react";
+import { CircleCheck, FileText, Undo2 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Badge, Button, Card, ErrorBox, Field, Input, Loading, PageHeader } from "@/components/ui";
 import { getInvoice, getSettings, setInvoicePaid } from "@/lib/db";
 import { formatDate, todayIso } from "@/lib/dates";
 import { formatEuros, lineTotalCents } from "@/lib/money";
-import { downloadInvoicePdf } from "@/lib/pdf/download";
+import { buildInvoicePdf, type BuiltPdf } from "@/lib/pdf/download";
+import { PdfPreview } from "@/components/PdfPreview";
 import { useAsync } from "@/lib/useAsync";
 
 export default function Page() {
@@ -28,6 +29,7 @@ function InvoiceView() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<unknown>(null);
   const [paidDate, setPaidDate] = useState(todayIso());
+  const [preview, setPreview] = useState<BuiltPdf | null>(null);
 
   if (loading) return <Loading />;
   if (error) return <ErrorBox error={error} />;
@@ -127,9 +129,9 @@ function InvoiceView() {
               </div>
             </dl>
           </Card>
-          <Button onClick={() => act(() => downloadInvoicePdf(inv, data!.settings))} disabled={busy}>
-            <Download />
-            Descargar PDF
+          <Button onClick={() => act(async () => setPreview(await buildInvoicePdf(inv, data!.settings)))} disabled={busy}>
+            <FileText />
+            {busy ? "Generando…" : "Ver PDF"}
           </Button>
           {inv.status === "pendiente" ? (
             <Card className="flex flex-col gap-3">
@@ -167,6 +169,7 @@ function InvoiceView() {
           )}
         </aside>
       </div>
+      {preview ? <PdfPreview pdf={preview} onClose={() => setPreview(null)} /> : null}
     </>
   );
 }

@@ -12,7 +12,7 @@ function safeName(s: string) {
     .slice(0, 60);
 }
 
-function saveBlob(blob: Blob, filename: string) {
+export function saveBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -23,17 +23,32 @@ function saveBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+export interface BuiltPdf {
+  blob: Blob;
+  filename: string;
+}
+
 // La librería de PDF se carga solo cuando hace falta, para que la app arranque rápido.
 
-export async function downloadQuotePdf(quote: Quote, company: CompanySettings, layout: "compact" | "large" = "compact") {
+export async function buildQuotePdf(quote: Quote, company: CompanySettings, layout: "compact" | "large" = "compact"): Promise<BuiltPdf> {
   const [{ pdf }, { QuotePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./QuotePdf")]);
   const blob = await pdf(<QuotePdf quote={quote} company={company} layout={layout} />).toBlob();
   const suffix = layout === "large" ? " (dibujos grandes)" : "";
-  saveBlob(blob, `Presupuesto ${quote.number} ${safeName(quote.client.name)}${suffix}.pdf`);
+  return { blob, filename: `Presupuesto ${quote.number} ${safeName(quote.client.name)}${suffix}.pdf` };
+}
+
+export async function buildInvoicePdf(invoice: Invoice, company: CompanySettings): Promise<BuiltPdf> {
+  const [{ pdf }, { InvoicePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./InvoicePdf")]);
+  const blob = await pdf(<InvoicePdf invoice={invoice} company={company} />).toBlob();
+  return { blob, filename: `Factura ${invoice.number} ${safeName(invoice.client.name)}.pdf` };
+}
+
+export async function downloadQuotePdf(quote: Quote, company: CompanySettings, layout: "compact" | "large" = "compact") {
+  const { blob, filename } = await buildQuotePdf(quote, company, layout);
+  saveBlob(blob, filename);
 }
 
 export async function downloadInvoicePdf(invoice: Invoice, company: CompanySettings) {
-  const [{ pdf }, { InvoicePdf }] = await Promise.all([import("@react-pdf/renderer"), import("./InvoicePdf")]);
-  const blob = await pdf(<InvoicePdf invoice={invoice} company={company} />).toBlob();
-  saveBlob(blob, `Factura ${invoice.number} ${safeName(invoice.client.name)}.pdf`);
+  const { blob, filename } = await buildInvoicePdf(invoice, company);
+  saveBlob(blob, filename);
 }

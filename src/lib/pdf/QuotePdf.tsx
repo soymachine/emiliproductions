@@ -64,7 +64,7 @@ export function QuotePdf({ quote, company, layout = "compact" }: { quote: Quote;
               <View style={[s.row, { borderBottom: "none" }]}>{info}</View>
               {hasDrawing ? (
                 <View style={{ alignItems: "center", paddingTop: 4 }}>
-                  <DrawingPdf params={l.drawing} widthMm={l.widthMm} heightMm={l.heightMm} size={380} />
+                  <DrawingPdf params={l.drawing} widthMm={l.widthMm} heightMm={l.heightMm} size={285} />
                 </View>
               ) : null}
             </View>

@@ -62,7 +62,7 @@ export function QuoteLineCard({
                 value={line.description}
                 onChange={(e) => set({ description: e.target.value })}
                 disabled={readOnly}
-                rows={Math.min(6, Math.max(2, line.description.split("\n").length))}
+                rows={Math.min(14, Math.max(7, line.description.split("\n").length))}
                 className="leading-snug"
               />
             </Field>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ClientPicker } from "@/components/ClientPicker";
 import { QuoteLineCard } from "@/components/QuoteLineCard";
 import { Copy, Download, FilePlus2, Plus, Receipt, Save, Check, Trash2 } from "lucide-react";
@@ -23,7 +23,8 @@ import {
 import { addDaysIso, todayIso } from "@/lib/dates";
 import { DrawingSvg } from "@/lib/drawings/DrawingSvg";
 import { computeTotals, formatEuros } from "@/lib/money";
-import { downloadQuotePdf } from "@/lib/pdf/download";
+import { buildQuotePdf, type BuiltPdf } from "@/lib/pdf/download";
+import { PdfPreview } from "@/components/PdfPreview";
 import { useAsync } from "@/lib/useAsync";
 import type { ArticleCategory, ArticleType, Client, CompanySettings, Quote, QuoteLine, QuoteStatus, VatRate } from "@/lib/types";
 
@@ -40,6 +41,8 @@ function QuoteEditorLoader() {
   const id = params.get("id");
   const duplicateOf = params.get("duplicar");
   const presetClient = params.get("cliente");
+  // Tras guardar un presupuesto nuevo para ver su PDF, la página se recarga con ?pdf=… y abre la vista previa.
+  const autoPdf = params.get("pdf") as PdfLayout | null;
   const { data, error, loading } = useAsync(async () => {
     const [quote, clients, articles, settings] = await Promise.all([
       id || duplicateOf ? getQuote((id || duplicateOf)!) : Promise.resolve(null),
@@ -73,8 +76,10 @@ function QuoteEditorLoader() {
     };
   }
 
-  return <QuoteEditor key={id ?? `new-${duplicateOf ?? ""}`} initial={initial} clients={data.clients} articles={data.articles} settings={data.settings} />;
+  return <QuoteEditor key={id ?? `new-${duplicateOf ?? ""}`} initial={initial} clients={data.clients} articles={data.articles} settings={data.settings} autoPdf={id ? autoPdf : null} />;
 }
+
+type PdfLayout = "compact" | "large";
 
 function lineFromArticle(a: ArticleType): QuoteLine {
   return {
@@ -94,7 +99,9 @@ function QuoteEditor({
   clients: initialClients,
   articles,
   settings,
+  autoPdf,
 }: {
+  autoPdf?: PdfLayout | null;
   initial: QuoteDraft & { number?: string; invoiceId?: string | null };
   clients: Client[];
   articles: ArticleType[];
@@ -109,6 +116,7 @@ function QuoteEditor({
   const [picking, setPicking] = useState(false);
   const [converting, setConverting] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState(todayIso());
+  const [preview, setPreview] = useState<BuiltPdf | null>(null);
 
   const readOnly = Boolean(initial.invoiceId);
   const totals = useMemo(() => computeTotals(q.lines, q.vatRate), [q.lines, q.vatRate]);
@@ -121,7 +129,7 @@ function QuoteEditor({
 
   const selectClient = (c: Client) => update({ clientId: c.id, client: clientSnapshot(c) });
 
-  async function save(): Promise<string | null> {
+  async function save(thenPdf?: PdfLayout): Promise<string | null> {
     setError(null);
     if (!q.clientId) {
       setError(new Error("Elige un cliente antes de guardar."));
@@ -134,7 +142,9 @@ function QuoteEditor({
     setDirty(false);
     if (!q.id) {
       setQ({ ...draft, id });
-      router.replace(`/presupuestos/editar/?id=${id}`);
+      router.replace(`/presupuestos/editar/?id=${id}${thenPdf ? `&pdf=${thenPdf}` : ""}`);
+      // La página se recarga con el presupuesto ya numerado; la vista previa se abre allí.
+      if (thenPdf) return null;
     }
     return id;
   }
@@ -151,14 +161,21 @@ function QuoteEditor({
     }
   }
 
-  async function pdf(layout: "compact" | "large") {
+  async function pdf(layout: PdfLayout) {
     await run(`pdf-${layout}`, async () => {
-      const id = readOnly ? q.id! : await save();
+      const id = readOnly || (q.id && !dirty) ? q.id! : await save(layout);
       if (!id) return;
       const fresh = (await getQuote(id)) as Quote;
-      await downloadQuotePdf(fresh, settings, layout);
+      setPreview(await buildQuotePdf(fresh, settings, layout));
     });
   }
+
+  useEffect(() => {
+    if (!autoPdf || !initial.id) return;
+    router.replace(`/presupuestos/editar/?id=${initial.id}`, { scroll: false });
+    void pdf(autoPdf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function convert() {
     await run("convert", async () => {
@@ -359,6 +376,8 @@ function QuoteEditor({
           }}
         />
       ) : null}
+
+      {preview ? <PdfPreview pdf={preview} onClose={() => setPreview(null)} /> : null}
 
       {converting ? (
         <Modal title="Convertir en factura" onClose={() => setConverting(false)}>
