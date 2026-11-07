@@ -108,7 +108,10 @@ export interface Quote extends Totals {
   updatedAt: number;
 }
 
-export type InvoiceLine = Omit<QuoteLine, "drawing" | "articleTypeId" | "id">;
+export type InvoiceLine = Omit<QuoteLine, "drawing" | "articleTypeId" | "id"> & {
+  /** Nombre del color del marco, copiado del presupuesto («Antracita (RAL 7016)»). */
+  color?: string;
+};
 
 export type InvoiceStatus = "pendiente" | "parcial" | "pagada";
 

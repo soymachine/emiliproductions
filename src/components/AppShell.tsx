@@ -28,9 +28,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const name = company?.name ?? "";
 
   return (
-    <div className="min-h-screen md:pl-64">
+    <div className="min-h-dvh md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
       {/* Barra lateral (escritorio) */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-sidebar text-sidebar-foreground md:flex">
+      {/* Barra lateral: sticky con el alto visible real (dvh), para que en el iPad no se corte al hacer scroll. */}
+      <aside className="sticky top-0 z-30 hidden h-dvh w-64 flex-col overflow-y-auto overscroll-contain bg-sidebar text-sidebar-foreground md:flex">
         <Link href="/" className="flex items-center gap-3 px-5 py-5">
           <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
             <BrandMark logo={company?.logoDataUrl} name={name} className="size-full p-1 text-lg" />
@@ -83,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </button>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 md:pb-12 md:pt-10 lg:px-10">{children}</main>
+      <main className="mx-auto w-full max-w-7xl px-4 pb-28 pt-6 sm:px-6 md:pb-12 md:pt-10 lg:px-10">{children}</main>
 
       {/* Barra inferior (móvil) */}
       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">

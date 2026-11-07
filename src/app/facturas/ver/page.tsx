@@ -97,9 +97,9 @@ function InvoiceView() {
                   <tr key={i}>
                     <td className="px-4 py-3">
                       <p className="whitespace-pre-line font-medium">{l.description}</p>
-                      {l.widthMm && l.heightMm ? (
+                      {(l.widthMm && l.heightMm) || l.color ? (
                         <p className="text-sm text-muted-foreground">
-                          {l.widthMm} × {l.heightMm} mm
+                          {[l.widthMm && l.heightMm ? `${l.widthMm} × ${l.heightMm} mm` : "", l.color ? `Color: ${l.color}` : ""].filter(Boolean).join(" · ")}
                         </p>
                       ) : null}
                     </td>

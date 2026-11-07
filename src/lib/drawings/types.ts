@@ -29,6 +29,8 @@ export interface DrawingParams {
   sideLeftMm: number;
   /** Anchura en mm del fijo lateral derecho (0 = sin fijo). */
   sideRightMm: number;
+  /** Color del marco (id de FRAME_COLORS). Sin valor: blanco, como siempre. */
+  frameColor?: string;
 }
 
 export type Primitive =

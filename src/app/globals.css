@@ -62,9 +62,13 @@
 /* Textos grandes y cómodos: tamaño base 17px. */
 html {
   font-size: 17px;
+  background: var(--background);
+  /* Sin "rebote" al hacer scroll en iPad/iPhone (dejaba franjas en blanco). */
+  overscroll-behavior-y: none;
 }
 
 body {
+  overscroll-behavior-y: none;
   background: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
@@ -88,4 +92,24 @@ textarea {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Campos de fecha: Safari (iPad/iPhone) les pone su estilo nativo (texto centrado, otro alto).
+   Los igualamos al resto de campos. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  line-height: 1.25;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  min-height: 1.25em;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.6;
+  cursor: pointer;
 }

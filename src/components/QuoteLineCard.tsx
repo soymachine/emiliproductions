@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, Copy, Maximize2, PencilRuler, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { DrawingSvg } from "@/lib/drawings/DrawingSvg";
+import { frameColor, frameColorLabel } from "@/lib/drawings/colors";
 import { centsToInput, formatEuros, lineTotalCents, parseEurosToCents } from "@/lib/money";
 import type { QuoteLine } from "@/lib/types";
 import { DrawingEditor } from "./DrawingEditor";
@@ -35,6 +36,7 @@ export function QuoteLineCard({
   const [price, setPrice] = useState(line.unitPriceCents ? centsToInput(line.unitPriceCents) : "");
   const set = (patch: Partial<QuoteLine>) => onChange({ ...line, ...patch });
   const hasDrawing = line.drawing.kind !== "ninguno";
+  const colorLabel = hasDrawing ? frameColorLabel(line.drawing.frameColor) : "";
 
   return (
     <Card className="p-4">
@@ -138,7 +140,15 @@ export function QuoteLineCard({
             ) : (
               <span />
             )}
-            <span className="tabular text-lg font-bold">{formatEuros(lineTotalCents(line.quantity, line.unitPriceCents))}</span>
+            <span className="flex items-center gap-4">
+              {colorLabel ? (
+                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <span className="size-3.5 rounded-full border border-slate-300" style={{ background: frameColor(line.drawing.frameColor)?.fill }} />
+                  Color: {colorLabel}
+                </span>
+              ) : null}
+              <span className="tabular text-lg font-bold">{formatEuros(lineTotalCents(line.quantity, line.unitPriceCents))}</span>
+            </span>
           </div>
         </div>
       </div>

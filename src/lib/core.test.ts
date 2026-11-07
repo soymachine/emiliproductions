@@ -3,6 +3,7 @@ import { applyDiscount, computeTotals, formatEuros, parseEurosToCents, parsePerc
 import { addDaysIso, formatDate, formatDocNumber, isValidNumberFormat, rangePreset } from "./dates";
 import { paidCentsOf, paymentsOf, pendingCentsOf, withPayment, withoutPayment } from "./payments";
 import { generateDrawing } from "./drawings/generate";
+import { frameColorLabel } from "./drawings/colors";
 import { DEFAULT_SETTINGS, drawing, fillQuoteNotes, SEED_ARTICLE_TYPES } from "./defaults";
 import { decodeText, guessKind, guessMapping, planImport, rowsToClients, type ImportedClient } from "./import/clients";
 import { matchesClient, nextClientCode } from "./search";
@@ -271,5 +272,23 @@ describe("rangos de fechas", () => {
     expect(rangePreset("año", "2026-11-07")).toEqual({ from: "2026-01-01", to: "2026-12-31" });
     expect(rangePreset("año-pasado", "2026-11-07")).toEqual({ from: "2025-01-01", to: "2025-12-31" });
     expect(rangePreset("mes", "2028-02-15").to).toBe("2028-02-29");
+  });
+});
+
+describe("color del marco", () => {
+  const fills = (d: ReturnType<typeof generateDrawing>) => d!.items.flatMap((i) => ("fill" in i && i.fill ? [i.fill] : []));
+  it("pinta el marco y las hojas del color elegido", () => {
+    const d = generateDrawing(drawing("ventana", ["izq", "dcha"], { frameColor: "antracita" }), 1200, 1200);
+    expect(fills(d).filter((f) => f === "#383e42").length).toBe(3); // marco + 2 hojas
+    expect(fills(d)).toContain("#ffffff"); // vidrio
+  });
+  it("sin color se ve como siempre", () => {
+    const d = generateDrawing(drawing("ventana", ["izq"]), 1000, 1000);
+    expect(fills(d).filter((f) => f !== "#000")).toEqual([]);
+  });
+  it("nombre del color", () => {
+    expect(frameColorLabel("antracita")).toBe("Antracita (RAL 7016)");
+    expect(frameColorLabel("bronce")).toBe("Bronce");
+    expect(frameColorLabel(undefined)).toBe("");
   });
 });

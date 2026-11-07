@@ -28,6 +28,7 @@ import type {
   Quote,
 } from "./types";
 import { withPayment, withoutPayment } from "./payments";
+import { frameColorLabel } from "./drawings/colors";
 
 const col = (name: string) => collection(getDb(), name);
 
@@ -285,6 +286,7 @@ export async function convertQuoteToInvoice(quoteId: string, date: string): Prom
         heightMm: l.heightMm,
         quantity: l.quantity,
         unitPriceCents: l.unitPriceCents,
+        color: l.drawing.kind !== "ninguno" ? frameColorLabel(l.drawing.frameColor) : "",
       })),
       vatRate: q.vatRate,
       notes: q.notes,

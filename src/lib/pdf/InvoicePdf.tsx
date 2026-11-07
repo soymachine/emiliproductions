@@ -2,7 +2,7 @@ import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { formatDate } from "../dates";
 import { formatEuros, lineTotalCents } from "../money";
 import type { CompanySettings, Invoice } from "../types";
-import { ClientBox, CompanyHeader, Footer, GdprText, LineDescription, measures, qty, s, TotalsBlock } from "./common";
+import { ClientBox, CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
 
 const COL = { desc: 1, qty: 45, price: 80, amount: 85 };
 
@@ -33,7 +33,7 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
           <View key={i} style={s.row} wrap={false}>
             <View style={{ flex: COL.desc, paddingRight: 6 }}>
               <LineDescription text={l.description} />
-              {measures(l.widthMm, l.heightMm) ? <Text style={s.muted}>Medidas: {measures(l.widthMm, l.heightMm)}</Text> : null}
+              {measuresLine(l.widthMm, l.heightMm, l.color) ? <Text style={s.muted}>{measuresLine(l.widthMm, l.heightMm, l.color)}</Text> : null}
             </View>
             <Text style={[{ width: COL.qty }, s.num]}>{qty(l.quantity)}</Text>
             <Text style={[{ width: COL.price }, s.num]}>{formatEuros(l.unitPriceCents)}</Text>

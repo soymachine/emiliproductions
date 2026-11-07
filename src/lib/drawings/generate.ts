@@ -1,3 +1,4 @@
+import { frameColor } from "./colors";
 import type { Drawing, DrawingParams, LeafType, Primitive } from "./types";
 
 /** Tamaño máximo (en unidades del dibujo) del hueco; el resto es margen para las cotas. */
@@ -63,7 +64,10 @@ function arrow(x1: number, y: number, x2: number, sw: number): Primitive[] {
   ];
 }
 
-function leafSymbol(c: Cell, isDoor: boolean): Primitive[] {
+/** Ancho (en unidades del dibujo) del perfil de cada hoja cuando el marco lleva color. */
+const SASH = 3;
+
+function leafSymbol(c: Cell, isDoor: boolean, color?: string): Primitive[] {
   const out: Primitive[] = [];
   const inset = c.type === "fijo" ? 0 : 3;
   const x0 = c.x + inset;
@@ -73,7 +77,11 @@ function leafSymbol(c: Cell, isDoor: boolean): Primitive[] {
   const ym = (y0 + y1) / 2;
   const xm = (x0 + x1) / 2;
 
-  if (c.type !== "fijo") out.push({ t: "rect", x: x0, y: y0, w: x1 - x0, h: y1 - y0, sw: STROKE });
+  if (c.type !== "fijo") {
+    out.push({ t: "rect", x: x0, y: y0, w: x1 - x0, h: y1 - y0, sw: STROKE, fill: color });
+    // Con color, el perfil de la hoja se pinta y el vidrio queda blanco.
+    if (color) out.push({ t: "rect", x: x0 + SASH, y: y0 + SASH, w: x1 - x0 - 2 * SASH, h: y1 - y0 - 2 * SASH, sw: 0.5, fill: "#ffffff" });
+  }
 
   const handle = (side: "left" | "right") => {
     const hx = side === "left" ? x0 + 4 : x1 - 4;
@@ -153,13 +161,14 @@ export function generateDrawing(p: DrawingParams, widthMm: number, heightMm: num
   const isDoor = p.kind === "puerta";
 
   // Marco
-  items.push({ t: "rect", x: ox, y: oy, w: W, h: H, sw: STROKE_FRAME });
+  const color = frameColor(p.frameColor)?.fill;
+  items.push({ t: "rect", x: ox, y: oy, w: W, h: H, sw: STROKE_FRAME, fill: color });
   const ix = ox + FRAME;
   const iy = oy + FRAME;
   const iw = W - 2 * FRAME;
   // En puertas no hay perfil inferior completo, solo umbral.
   const ih = isDoor ? H - FRAME - 1.5 : H - 2 * FRAME;
-  items.push({ t: "rect", x: ix, y: iy, w: iw, h: ih, sw: STROKE });
+  items.push({ t: "rect", x: ix, y: iy, w: iw, h: ih, sw: STROKE, fill: color ? "#ffffff" : undefined });
   if (isDoor) {
     // Suelo
     items.push({ t: "line", x1: ox - 4, y1: oy + H, x2: ox + W + 4, y2: oy + H, sw: 2.2 });
@@ -189,7 +198,7 @@ export function generateDrawing(p: DrawingParams, widthMm: number, heightMm: num
 
   for (const c of cells) {
     items.push({ t: "rect", x: c.x, y: c.y, w: c.w, h: c.h, sw: STROKE });
-    items.push(...leafSymbol(c, isDoor));
+    items.push(...leafSymbol(c, isDoor, color));
   }
 
   // Cotas en mm. Si hay fijos, primero una cadena con cada sección y, más afuera, la total.

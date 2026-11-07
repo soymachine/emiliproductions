@@ -2,6 +2,10 @@
 
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { FRAME_COLORS } from "@/lib/drawings/colors";
+
+// Radix Select no admite valores vacíos.
+const NO_COLOR = "__sin-color__";
 import { KIND_LABELS, LEAF_LABELS, type DrawingKind, type DrawingParams, type LeafType } from "@/lib/drawings/types";
 import { Field, Input, Select } from "./ui";
 
@@ -47,6 +51,24 @@ export function DrawingEditor({ value, onChange }: { value: DrawingParams; onCha
 
       {value.kind !== "ninguno" ? (
         <>
+          <Field label="Color del marco">
+            <Select
+              value={value.frameColor ?? NO_COLOR}
+              onValueChange={(v) => set({ frameColor: v === NO_COLOR ? undefined : v })}
+              options={[
+                { value: NO_COLOR, label: "Sin indicar" },
+                ...FRAME_COLORS.map((c) => ({
+                  value: c.id,
+                  label: (
+                    <span className="inline-flex items-center gap-2.5">
+                      <span className="size-4 shrink-0 rounded-full border border-slate-300 shadow-inner" style={{ background: c.fill }} />
+                      {c.ref ? `${c.name} (${c.ref})` : c.name}
+                    </span>
+                  ),
+                })),
+              ]}
+            />
+          </Field>
           <div>
             <span className="text-sm font-medium text-slate-700">Nº de hojas</span>
             <div className="mt-1.5 inline-flex rounded-lg border bg-muted p-1">

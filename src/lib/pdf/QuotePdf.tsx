@@ -3,7 +3,8 @@ import { DrawingPdf } from "../drawings/DrawingPdf";
 import { formatDate } from "../dates";
 import { formatEuros, lineTotalCents } from "../money";
 import type { CompanySettings, Quote } from "../types";
-import { ClientBox, CompanyHeader, Footer, GdprText, LineDescription, measures, qty, s, TotalsBlock } from "./common";
+import { frameColorLabel } from "../drawings/colors";
+import { ClientBox, CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
 
 const COL = { drawing: 115, desc: 1, qty: 40, price: 70, amount: 75 };
 
@@ -40,7 +41,10 @@ export function QuotePdf({ quote, company, layout = "compact" }: { quote: Quote;
             <>
               <View style={{ flex: COL.desc, paddingRight: 6 }}>
                 <LineDescription text={l.description} />
-                {measures(l.widthMm, l.heightMm) ? <Text style={s.muted}>Medidas: {measures(l.widthMm, l.heightMm)}</Text> : null}
+                {(() => {
+                  const t = measuresLine(l.widthMm, l.heightMm, l.drawing.kind !== "ninguno" ? frameColorLabel(l.drawing.frameColor) : "");
+                  return t ? <Text style={s.muted}>{t}</Text> : null;
+                })()}
               </View>
               <Text style={[{ width: COL.qty }, s.num]}>{qty(l.quantity)}</Text>
               <Text style={[{ width: COL.price }, s.num]}>{formatEuros(l.unitPriceCents)}</Text>

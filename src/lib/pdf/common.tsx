@@ -114,6 +114,12 @@ export function measures(widthMm: number, heightMm: number): string {
   return widthMm > 0 && heightMm > 0 ? `${widthMm} × ${heightMm} mm` : "";
 }
 
+/** «Medidas: 1500 × 1200 mm · Color: Antracita (RAL 7016)», o cadena vacía si no hay nada. */
+export function measuresLine(widthMm: number, heightMm: number, color?: string): string {
+  const parts = [measures(widthMm, heightMm) ? `Medidas: ${measures(widthMm, heightMm)}` : "", color ? `Color: ${color}` : ""];
+  return parts.filter(Boolean).join(" · ");
+}
+
 export function qty(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toLocaleString("es-ES", { maximumFractionDigits: 2 });
 }
