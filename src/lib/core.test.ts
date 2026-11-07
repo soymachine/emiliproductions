@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeTotals, formatEuros, parseEurosToCents } from "./money";
+import { applyDiscount, computeTotals, formatEuros, parseEurosToCents, parsePercent } from "./money";
 import { addDaysIso, formatDate, formatDocNumber, isValidNumberFormat } from "./dates";
 import { generateDrawing } from "./drawings/generate";
 import { DEFAULT_SETTINGS, drawing, fillQuoteNotes, SEED_ARTICLE_TYPES } from "./defaults";
@@ -200,5 +200,28 @@ describe("observaciones por defecto", () => {
   });
   it("deja un hueco visible si falta el IBAN", () => {
     expect(fillQuoteNotes({ ...DEFAULT_SETTINGS, iban: "" })).toContain("ESXX XXXX");
+  });
+});
+
+describe("descuento", () => {
+  it("rebaja cada precio y el total el mismo porcentaje", () => {
+    const lines = [
+      { quantity: 2, unitPriceCents: 45000 },
+      { quantity: 1, unitPriceCents: 120000 },
+    ];
+    const d = applyDiscount(lines, 25);
+    expect(d.map((l) => l.unitPriceCents)).toEqual([33750, 90000]);
+    expect(computeTotals(d, 21).subtotalCents).toBe(computeTotals(lines, 21).subtotalCents * 0.75);
+    expect(applyDiscount([{ unitPriceCents: 999 }], 12.5)[0].unitPriceCents).toBe(874);
+  });
+  it("rechaza porcentajes fuera de rango", () => {
+    expect(() => applyDiscount([], 0)).toThrow();
+    expect(() => applyDiscount([], -5)).toThrow();
+    expect(() => applyDiscount([], 100)).toThrow();
+    expect(parsePercent("25")).toBe(25);
+    expect(parsePercent("12,5 %")).toBe(12.5);
+    expect(parsePercent("0")).toBeNull();
+    expect(parsePercent("abc")).toBeNull();
+    expect(parsePercent("150")).toBeNull();
   });
 });

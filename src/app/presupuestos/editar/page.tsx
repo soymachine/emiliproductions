@@ -25,8 +25,9 @@ import { DrawingSvg } from "@/lib/drawings/DrawingSvg";
 import { computeTotals, formatEuros } from "@/lib/money";
 import { buildQuotePdf, type BuiltPdf } from "@/lib/pdf/download";
 import { PdfPreview } from "@/components/PdfPreview";
+import { DiscountBox } from "@/components/DiscountBox";
 import { useAsync } from "@/lib/useAsync";
-import type { ArticleCategory, ArticleType, Client, CompanySettings, Quote, QuoteLine, QuoteStatus, VatRate } from "@/lib/types";
+import type { ArticleCategory, ArticleType, Client, CompanySettings, Quote, QuoteLine, VatRate } from "@/lib/types";
 
 export default function Page() {
   return (
@@ -117,6 +118,8 @@ function QuoteEditor({
   const [converting, setConverting] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState(todayIso());
   const [preview, setPreview] = useState<BuiltPdf | null>(null);
+  // Se incrementa al aplicar un descuento para que cada línea vuelva a mostrar su precio.
+  const [linesVersion, setLinesVersion] = useState(0);
 
   const readOnly = Boolean(initial.invoiceId);
   const totals = useMemo(() => computeTotals(q.lines, q.vatRate), [q.lines, q.vatRate]);
@@ -193,7 +196,7 @@ function QuoteEditor({
       <PageHeader
         title={title}
         back={{ href: "/presupuestos/", label: "Presupuestos" }}
-        actions={initial.number ? <Badge status={q.status} /> : null}
+        actions={initial.number ? <Badge status={readOnly ? "facturado" : "sin facturar"} /> : null}
       />
       <ErrorBox error={error} />
       {readOnly ? (
@@ -228,7 +231,7 @@ function QuoteEditor({
           {q.lines.length === 0 ? <Empty icon={<FilePlus2 />}>Añade el primer artículo al presupuesto.</Empty> : null}
           {q.lines.map((line, i) => (
             <QuoteLineCard
-              key={line.id}
+              key={`${line.id}-${linesVersion}`}
               line={line}
               index={i}
               count={q.lines.length}
@@ -281,20 +284,6 @@ function QuoteEditor({
                 ]}
               />
             </Field>
-            {!readOnly ? (
-              <Field label="Estado">
-                <Select
-                  value={q.status}
-                  onValueChange={(v) => update({ status: v as QuoteStatus })}
-                  options={[
-                    { value: "borrador", label: "Borrador" },
-                    { value: "enviado", label: "Enviado" },
-                    { value: "aceptado", label: "Aceptado" },
-                    { value: "rechazado", label: "Rechazado" },
-                  ]}
-                />
-              </Field>
-            ) : null}
             <dl className="tabular mt-2 flex flex-col gap-1.5 rounded-lg bg-muted/60 p-4">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Base imponible</dt>
@@ -310,6 +299,17 @@ function QuoteEditor({
               </div>
             </dl>
           </Card>
+
+          {!readOnly && q.lines.length > 0 ? (
+            <DiscountBox
+              lines={q.lines}
+              vatRate={q.vatRate}
+              onApply={(lines) => {
+                update({ lines });
+                setLinesVersion((v) => v + 1);
+              }}
+            />
+          ) : null}
 
           {!readOnly ? (
             <Button onClick={() => run("save", async () => void (await save()))} disabled={busy !== null}>

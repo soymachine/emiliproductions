@@ -49,3 +49,20 @@ export function computeTotals(
   const vatCents = Math.round((subtotalCents * vatRate) / 100);
   return { subtotalCents, vatCents, totalCents: subtotalCents + vatCents };
 }
+
+/**
+ * Rebaja el precio unitario de cada línea un porcentaje (p. ej. 25 → cada precio al 75 %).
+ * Así el total baja lo mismo y el PDF muestra directamente los precios rebajados.
+ */
+export function applyDiscount<T extends { unitPriceCents: number }>(lines: T[], pct: number): T[] {
+  if (!Number.isFinite(pct) || pct <= 0 || pct >= 100) throw new Error("El descuento tiene que estar entre 0 y 100 %.");
+  return lines.map((l) => ({ ...l, unitPriceCents: Math.round((l.unitPriceCents * (100 - pct)) / 100) }));
+}
+
+/** Convierte lo que escribe el usuario («25», «12,5», «10 %») en número; null si no es válido. */
+export function parsePercent(input: string): number | null {
+  const s = input.replace("%", "").replace(",", ".").trim();
+  if (!/^\d+(\.\d+)?$/.test(s)) return null;
+  const n = Number(s);
+  return n > 0 && n < 100 ? n : null;
+}

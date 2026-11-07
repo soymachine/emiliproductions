@@ -8,26 +8,24 @@ import { formatDate } from "@/lib/dates";
 import { formatEuros } from "@/lib/money";
 import { normalizeText } from "@/lib/search";
 import { useAsync } from "@/lib/useAsync";
-import type { QuoteStatus } from "@/lib/types";
 
-const STATUS_OPTIONS = [
-  { value: "todos", label: "Todos los estados" },
-  { value: "borrador", label: "Borrador" },
-  { value: "enviado", label: "Enviado" },
-  { value: "aceptado", label: "Aceptado" },
-  { value: "rechazado", label: "Rechazado" },
-  { value: "facturado", label: "Facturado" },
+type Filter = "todos" | "sin-facturar" | "facturados";
+
+const FILTER_OPTIONS = [
+  { value: "todos", label: "Todos" },
+  { value: "sin-facturar", label: "Sin facturar" },
+  { value: "facturados", label: "Facturados" },
 ];
 
 export default function QuotesPage() {
   const { data, error, loading } = useAsync(listQuotes);
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<"todos" | QuoteStatus>("todos");
+  const [status, setStatus] = useState<Filter>("todos");
   const filtered = useMemo(
     () =>
       (data ?? []).filter(
         (x) =>
-          (status === "todos" || x.status === status) &&
+          (status === "todos" || (status === "facturados") === Boolean(x.invoiceId)) &&
           (!q || normalizeText(`${x.number} ${x.client.name} ${x.client.city}`).includes(normalizeText(q))),
       ),
     [data, q, status],
@@ -52,10 +50,10 @@ export default function QuotesPage() {
         </div>
         <Select
           value={status}
-          onValueChange={(v) => setStatus(v as QuoteStatus | "todos")}
-          options={STATUS_OPTIONS}
+          onValueChange={(v) => setStatus(v as Filter)}
+          options={FILTER_OPTIONS}
           className="sm:w-56"
-          aria-label="Filtrar por estado"
+          aria-label="Filtrar"
         />
       </div>
       <ErrorBox error={error} />
@@ -74,8 +72,8 @@ export default function QuotesPage() {
                 </span>
               </span>
               <span className="tabular text-right font-semibold">{formatEuros(x.totalCents)}</span>
-              <span className="w-28 text-right">
-                <Badge status={x.status} />
+              <span className="w-32 text-right">
+                <Badge status={x.invoiceId ? "facturado" : "sin facturar"} />
               </span>
             </ListRow>
           ))}

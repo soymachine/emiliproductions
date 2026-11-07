@@ -205,6 +205,7 @@ const badgeColors: Record<string, string> = {
   aceptado: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   rechazado: "bg-red-50 text-red-700 ring-red-200",
   facturado: "bg-violet-50 text-violet-700 ring-violet-200",
+  "sin facturar": "bg-slate-50 text-slate-600 ring-slate-200",
   pendiente: "bg-amber-50 text-amber-800 ring-amber-200",
   pagada: "bg-emerald-50 text-emerald-700 ring-emerald-200",
 };
@@ -215,6 +216,7 @@ const badgeDots: Record<string, string> = {
   aceptado: "bg-emerald-500",
   rechazado: "bg-red-500",
   facturado: "bg-violet-500",
+  "sin facturar": "bg-slate-300",
   pendiente: "bg-amber-500",
   pagada: "bg-emerald-500",
 };
@@ -223,12 +225,12 @@ export function Badge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-medium capitalize ring-1 ring-inset",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-medium ring-1 ring-inset",
         badgeColors[status] ?? "bg-slate-100 ring-slate-200",
       )}
     >
       <span className={cn("size-1.5 rounded-full", badgeDots[status] ?? "bg-slate-400")} />
-      {status}
+      {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
 }

@@ -56,7 +56,7 @@ export default function Home() {
   const year = String(new Date().getFullYear());
   const pending = data?.invoices.filter((i) => i.status === "pendiente") ?? [];
   const pendingTotal = pending.reduce((s, i) => s + i.totalCents, 0);
-  const openQuotes = data?.quotes.filter((q) => q.status === "enviado" || q.status === "aceptado") ?? [];
+  const openQuotes = data?.quotes.filter((q) => !q.invoiceId) ?? [];
   const billedYear = (data?.invoices ?? []).filter((i) => i.date.startsWith(year)).reduce((s, i) => s + i.subtotalCents, 0);
 
   return (
@@ -84,9 +84,9 @@ export default function Home() {
           href="/presupuestos/"
           icon={<FileText />}
           tone="bg-blue-50 text-blue-600"
-          label="Presupuestos abiertos"
+          label="Presupuestos sin facturar"
           value={data ? String(openQuotes.length) : "…"}
-          hint="enviados o aceptados"
+          hint={openQuotes.length ? formatEuros(openQuotes.reduce((s, q) => s + q.totalCents, 0)) : "ninguno pendiente"}
         />
         <Stat
           href="/facturas/"
@@ -124,7 +124,7 @@ export default function Home() {
                       <span className="block font-mono text-xs text-muted-foreground">{q.number}</span>
                     </span>
                     <span className="tabular hidden font-medium sm:inline">{formatEuros(q.totalCents)}</span>
-                    <Badge status={q.status} />
+                    <Badge status={q.invoiceId ? "facturado" : "sin facturar"} />
                   </Link>
                 </li>
               ))}

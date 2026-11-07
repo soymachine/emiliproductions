@@ -82,7 +82,7 @@ function EditClient() {
                     <span className="font-mono text-sm">{q.number}</span>
                     <span className="flex-1 text-muted-foreground">{formatDate(q.date)}</span>
                     <span className="tabular">{formatEuros(q.totalCents)}</span>
-                    <Badge status={q.status} />
+                    <Badge status={q.invoiceId ? "facturado" : "sin facturar"} />
                   </Link>
                 </li>
               ))}
