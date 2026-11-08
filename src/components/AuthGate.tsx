@@ -3,7 +3,7 @@
 import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, type User } from "firebase/auth";
 import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { BrandMark } from "./Brand";
-import { applyFavicon, CompanyProvider, readCachedBrand } from "./CompanyContext";
+import { applyFavicon, applyTouchIcon, CompanyProvider, readCachedBrand } from "./CompanyContext";
 import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
 import { ensureInitialData } from "@/lib/db";
 import { isViewerEmail } from "@/lib/access";
@@ -53,6 +53,7 @@ function Login() {
     const b = readCachedBrand();
     setBrand(b);
     if (b?.logo) applyFavicon(b.logo);
+    if (b) void applyTouchIcon(b.logo, b.name);
   }, []);
 
   async function submit(e: FormEvent) {
