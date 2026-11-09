@@ -4,6 +4,7 @@ import { formatDate } from "../dates";
 import { formatEuros, lineTotalCents } from "../money";
 import type { CompanySettings, Quote } from "../types";
 import { frameColorLabel } from "../drawings/colors";
+import { measuresLabel } from "../drawings/shapes";
 import { fillQuoteNotes } from "../defaults";
 import { CompanyHeader, Footer, GdprText, LineDescription, measuresLine, qty, s, TotalsBlock } from "./common";
 
@@ -41,7 +42,7 @@ export function QuotePdf({ quote, company, layout = "compact" }: { quote: Quote;
               <View style={{ flex: COL.desc, paddingRight: 6 }}>
                 <LineDescription text={l.description} />
                 {(() => {
-                  const t = measuresLine(l.widthMm, l.heightMm, l.drawing.kind !== "ninguno" ? frameColorLabel(l.drawing.frameColor) : "");
+                  const t = measuresLine(l.widthMm, l.heightMm, l.drawing.kind !== "ninguno" ? frameColorLabel(l.drawing.frameColor) : "", measuresLabel(l.drawing, l.widthMm, l.heightMm));
                   return t ? <Text style={s.muted}>{t}</Text> : null;
                 })()}
               </View>

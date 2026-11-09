@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { DrawingEditor } from "@/components/DrawingEditor";
+import { MeasureFields } from "@/components/MeasureFields";
 import { Button, Card, ErrorBox, Field, Input, Loading, PageHeader, Select } from "@/components/ui";
 import { CATEGORY_LABELS, drawing } from "@/lib/defaults";
 import { deleteArticleType, listArticleTypes, saveArticleType } from "@/lib/db";
@@ -78,15 +79,29 @@ function ArticleForm({ initial }: { initial: Omit<ArticleType, "id"> & { id?: st
             <Field label="Precio orientativo (€)">
               <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" />
             </Field>
-            <Field label="Ancho por defecto (mm)">
-              <Input type="number" inputMode="numeric" value={a.defaultWidthMm || ""} onChange={(e) => set({ defaultWidthMm: Number(e.target.value) || 0 })} />
-            </Field>
-            <Field label="Alto por defecto (mm)">
-              <Input type="number" inputMode="numeric" value={a.defaultHeightMm || ""} onChange={(e) => set({ defaultHeightMm: Number(e.target.value) || 0 })} />
-            </Field>
+          </div>
+          <p className="-mb-2 text-sm font-medium text-slate-700">Medidas por defecto</p>
+          <div className={`grid gap-4 ${a.drawing.kind === "inclinado" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+            <MeasureFields
+              drawing={a.drawing}
+              widthMm={a.defaultWidthMm}
+              heightMm={a.defaultHeightMm}
+              onChange={(patch) =>
+                set({
+                  ...(patch.widthMm !== undefined ? { defaultWidthMm: patch.widthMm } : {}),
+                  ...(patch.heightMm !== undefined ? { defaultHeightMm: patch.heightMm } : {}),
+                  ...(patch.drawing ? { drawing: patch.drawing } : {}),
+                })
+              }
+            />
           </div>
           <hr />
-          <DrawingEditor value={a.drawing} onChange={(d) => set({ drawing: d })} />
+          <DrawingEditor
+            value={a.drawing}
+            onChange={(d) =>
+              set({ drawing: d.kind === "inclinado" && !d.leftHeightMm ? { ...d, leftHeightMm: a.defaultHeightMm, rightHeightMm: a.defaultHeightMm } : d })
+            }
+          />
           <label className="flex items-center gap-3">
             <input type="checkbox" className="h-6 w-6" checked={a.active} onChange={(e) => set({ active: e.target.checked })} />
             Activo (aparece al añadir líneas a un presupuesto)

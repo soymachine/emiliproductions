@@ -4,6 +4,7 @@ import { addDaysIso, formatDate, formatDocNumber, isValidNumberFormat, rangePres
 import { paidCentsOf, paymentsOf, pendingCentsOf, withPayment, withoutPayment } from "./payments";
 import { generateDrawing } from "./drawings/generate";
 import { frameColorLabel } from "./drawings/colors";
+import { insetPolygon, measuresLabel, slopedLengthMm } from "./drawings/shapes";
 import { DEFAULT_SETTINGS, drawing, fillQuoteNotes, SEED_ARTICLE_TYPES } from "./defaults";
 import { decodeText, guessKind, guessMapping, planImport, rowsToClients, type ImportedClient } from "./import/clients";
 import { matchesClient, nextClientCode } from "./search";
@@ -299,5 +300,29 @@ describe("errores de carga tras publicar", () => {
     expect(isChunkLoadError(new Error("Failed to load chunk /_next/static/chunks/42ap2gusja6ce.js from module 26316"))).toBe(true);
     expect(isChunkLoadError(new TypeError("Importing a module script failed."))).toBe(true);
     expect(isChunkLoadError(new Error("El cobro es mayor que lo pendiente"))).toBe(false);
+  });
+});
+
+describe("fijo inclinado", () => {
+  const sloped = (slope: "arriba" | "abajo") => ({ ...drawing("inclinado", []), leftHeightMm: 1000, rightHeightMm: 800, slope });
+  it("calcula el lado inclinado", () => {
+    expect(slopedLengthMm(1200, 1000, 800)).toBe(1217);
+    expect(slopedLengthMm(1000, 500, 500)).toBe(1000);
+  });
+  it("desplaza el contorno hacia dentro", () => {
+    const r = insetPolygon([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }], 1);
+    expect(r.map((p) => [Math.round(p.x * 100) / 100, Math.round(p.y * 100) / 100])).toEqual([[1, 1], [9, 1], [9, 9], [1, 9]]);
+  });
+  it("dibuja la forma con sus cuatro cotas, arriba o abajo", () => {
+    for (const s of ["arriba", "abajo"] as const) {
+      const d = generateDrawing(sloped(s), 1200, 1000)!;
+      const texts = d.items.filter((i) => i.t === "text").map((i) => (i as { text: string }).text);
+      expect(texts).toEqual(expect.arrayContaining(["1200", "1000", "800", "1217", "F"]));
+      for (const it of d.items) for (const v of Object.values(it)) if (typeof v === "number") expect(Number.isFinite(v)).toBe(true);
+    }
+  });
+  it("texto de medidas", () => {
+    expect(measuresLabel(sloped("arriba"), 1200, 1000)).toBe("Base 1200 · Izq. 1000 · Dcha. 800 · Inclinado 1217 mm");
+    expect(measuresLabel(drawing("ventana", ["izq"]), 1300, 2500)).toBe("1300 × 2500 mm");
   });
 });

@@ -7,6 +7,8 @@ import { frameColor, frameColorLabel } from "@/lib/drawings/colors";
 import { centsToInput, formatEuros, lineTotalCents, parseEurosToCents } from "@/lib/money";
 import type { QuoteLine } from "@/lib/types";
 import { DrawingEditor } from "./DrawingEditor";
+import { MeasureFields } from "./MeasureFields";
+import { measuresLabel } from "@/lib/drawings/shapes";
 import { Button, Card, Field, Input, Modal, Textarea } from "./ui";
 
 const btn =
@@ -69,27 +71,8 @@ export function QuoteLineCard({
               />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Field label="Ancho (mm)">
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={line.widthMm || ""}
-                onChange={(e) => set({ widthMm: Number(e.target.value) || 0 })}
-                disabled={readOnly}
-              />
-            </Field>
-            <Field label="Alto (mm)">
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={line.heightMm || ""}
-                onChange={(e) => set({ heightMm: Number(e.target.value) || 0 })}
-                disabled={readOnly}
-              />
-            </Field>
+          <div className={`grid grid-cols-2 gap-3 ${line.drawing.kind === "inclinado" ? "sm:grid-cols-3 xl:grid-cols-5" : "xl:grid-cols-4"}`}>
+            <MeasureFields drawing={line.drawing} widthMm={line.widthMm} heightMm={line.heightMm} onChange={(patch) => set(patch)} disabled={readOnly} />
             <Field label="Cantidad">
               <Input
                 type="number"
@@ -154,7 +137,17 @@ export function QuoteLineCard({
       </div>
       {editDrawing && !readOnly ? (
         <div className="mt-5 rounded-lg border bg-muted/40 p-4">
-          <DrawingEditor value={line.drawing} onChange={(drawing) => set({ drawing })} />
+          <DrawingEditor
+            value={line.drawing}
+            onChange={(drawing) =>
+              set({
+                drawing:
+                  drawing.kind === "inclinado" && !drawing.leftHeightMm
+                    ? { ...drawing, leftHeightMm: line.heightMm, rightHeightMm: line.heightMm }
+                    : drawing,
+              })
+            }
+          />
         </div>
       ) : null}
       {zoom ? (
@@ -165,7 +158,7 @@ export function QuoteLineCard({
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-muted-foreground">
-                {line.widthMm} × {line.heightMm} mm · {line.quantity} {line.quantity === 1 ? "unidad" : "unidades"}
+                {measuresLabel(line.drawing, line.widthMm, line.heightMm)} · {line.quantity} {line.quantity === 1 ? "unidad" : "unidades"}
               </p>
               {!readOnly ? (
                 <Button

@@ -69,6 +69,20 @@ export function DrawingEditor({ value, onChange }: { value: DrawingParams; onCha
               ]}
             />
           </Field>
+          {value.kind === "inclinado" ? (
+            <Field label="Lado inclinado">
+              <Select
+                value={value.slope ?? "arriba"}
+                onValueChange={(v) => set({ slope: v as "arriba" | "abajo" })}
+                options={[
+                  { value: "arriba", label: "Arriba (base recta abajo)" },
+                  { value: "abajo", label: "Abajo (lado recto arriba)" },
+                ]}
+              />
+            </Field>
+          ) : null}
+          {value.kind !== "inclinado" ? (
+          <>
           <div>
             <span className="text-sm font-medium text-slate-700">Nº de hojas</span>
             <div className="mt-1.5 inline-flex rounded-lg border bg-muted p-1">
@@ -119,6 +133,8 @@ export function DrawingEditor({ value, onChange }: { value: DrawingParams; onCha
                 <NumberInput value={value.sideRightMm} onChange={(n) => set({ sideRightMm: n })} />
               </Field>
             </div>
+          ) : null}
+          </>
           ) : null}
         </>
       ) : null}

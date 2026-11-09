@@ -1,4 +1,5 @@
 import { frameColor } from "./colors";
+import { insetPolygon, pathFrom, slopedLengthMm, slopedSides, type Pt } from "./shapes";
 import type { Drawing, DrawingParams, LeafType, Primitive } from "./types";
 
 /** Tamaño máximo (en unidades del dibujo) del hueco; el resto es margen para las cotas. */
@@ -38,14 +39,22 @@ function hDim(xs: number[], y: number, mm: number[], size: number): Primitive[] 
 }
 
 /** Cadena de cotas vertical: marcas en cada y y la medida (mm) a la derecha de cada tramo. */
-function vDim(ys: number[], x: number, mm: number[], size: number): Primitive[] {
+function vDim(ys: number[], x: number, mm: number[], size: number, side: "right" | "left" = "right"): Primitive[] {
   const out: Primitive[] = [{ t: "line", x1: x, y1: ys[0], x2: x, y2: ys[ys.length - 1], sw: STROKE_SYMBOL }];
   for (const y of ys) out.push({ t: "line", x1: x - 4, y1: y, x2: x + 4, y2: y, sw: STROKE_SYMBOL });
   mm.forEach((v, i) => {
     const h = ys[i + 1] - ys[i];
     const label = fmt(v);
     const fit = Math.min(size, h - 2, 46 / (label.length * 0.58));
-    if (fit >= 8) out.push({ t: "text", x: x + 5, y: (ys[i] + ys[i + 1]) / 2 + fit * 0.36, text: label, size: Math.round(fit * 10) / 10, anchor: "start" });
+    if (fit >= 8)
+      out.push({
+        t: "text",
+        x: side === "right" ? x + 5 : x - 5,
+        y: (ys[i] + ys[i + 1]) / 2 + fit * 0.36,
+        text: label,
+        size: Math.round(fit * 10) / 10,
+        anchor: side === "right" ? "start" : "end",
+      });
   });
   return out;
 }
@@ -150,6 +159,7 @@ function leafSymbol(c: Cell, isDoor: boolean, color?: string): Primitive[] {
  */
 export function generateDrawing(p: DrawingParams, widthMm: number, heightMm: number): Drawing | null {
   if (p.kind === "ninguno") return null;
+  if (p.kind === "inclinado") return generateSloped(p, widthMm, heightMm);
   const wMm = Math.max(widthMm || 0, 100);
   const hMm = Math.max(heightMm || 0, 100);
   const s = Math.min(BOX / wMm, BOX / hMm);
@@ -228,4 +238,68 @@ export function generateDrawing(p: DrawingParams, widthMm: number, heightMm: num
   items.push(...vDim([oy, oy + H], dx2, [heightMm], DIM_TEXT));
 
   return { width: dx2 + 48, height: dy2 + 30, items };
+}
+
+/**
+ * Fijo inclinado (trapecio rectángulo): base recta y dos lados verticales de distinta altura.
+ * El lado inclinado puede ir arriba (base abajo) o abajo (lado recto arriba).
+ */
+function generateSloped(p: DrawingParams, widthMm: number, heightMm: number): Drawing {
+  const { left, right } = slopedSides(p, heightMm);
+  const wMm = Math.max(widthMm || 0, 100);
+  const lMm = Math.max(left, 50);
+  const rMm = Math.max(right, 50);
+  const maxMm = Math.max(lMm, rMm);
+  const s = Math.min(BOX / wMm, BOX / maxMm);
+  const W = wMm * s;
+  const H = maxMm * s;
+  const L = lMm * s;
+  const R = rMm * s;
+  const ox = 58; // margen izquierdo para la cota del lado izquierdo
+  const up = (p.slope ?? "arriba") === "arriba";
+  // Margen superior: con el inclinado arriba, para su medida; con el inclinado abajo, para la cota de la base.
+  const oy = up ? 26 : 50;
+  // Vértices en sentido horario empezando abajo a la izquierda.
+  const outer: Pt[] = up
+    ? [
+        { x: ox, y: oy + H },
+        { x: ox, y: oy + H - L },
+        { x: ox + W, y: oy + H - R },
+        { x: ox + W, y: oy + H },
+      ]
+    : [
+        { x: ox, y: oy + L },
+        { x: ox, y: oy },
+        { x: ox + W, y: oy },
+        { x: ox + W, y: oy + R },
+      ];
+  const color = frameColor(p.frameColor)?.fill;
+  const inner = insetPolygon(outer, FRAME);
+  const items: Primitive[] = [
+    { t: "path", d: pathFrom(outer), sw: STROKE_FRAME, fill: color ?? "#ffffff" },
+    { t: "path", d: pathFrom(inner), sw: STROKE, fill: "#ffffff" },
+  ];
+  const cx = inner.reduce((a, q) => a + q.x, 0) / inner.length;
+  const cy = inner.reduce((a, q) => a + q.y, 0) / inner.length;
+  items.push({ t: "text", x: cx, y: cy + 5, text: "F", size: 14, anchor: "middle" });
+
+  // Cotas: base, lado izquierdo (a la izquierda), lado derecho (a la derecha) e inclinado.
+  const yLeftTop = up ? oy + H - L : oy;
+  const yLeftBot = up ? oy + H : oy + L;
+  const yRightTop = up ? oy + H - R : oy;
+  const yRightBot = up ? oy + H : oy + R;
+  // La base (lado recto) se acota por su lado: abajo, o arriba si el inclinado va abajo.
+  items.push(...hDim([ox, ox + W], up ? oy + H + 16 : oy - 40, [widthMm], DIM_TEXT));
+  items.push(...vDim([yLeftTop, yLeftBot], ox - 14, [left], DIM_TEXT, "left"));
+  items.push(...vDim([yRightTop, yRightBot], ox + W + 14, [right], DIM_TEXT, "right"));
+
+  // Longitud del lado inclinado, junto a su punto medio y hacia fuera.
+  const a = up ? outer[1] : outer[0];
+  const b = up ? outer[2] : outer[3];
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  const off = up ? -9 : 22;
+  items.push({ t: "text", x: mx, y: my + off, text: `${slopedLengthMm(widthMm, left, right)}`, size: 15, anchor: "middle" });
+
+  return { width: ox + W + 14 + 54, height: oy + H + 46, items };
 }

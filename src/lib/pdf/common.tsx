@@ -125,8 +125,9 @@ export function measures(widthMm: number, heightMm: number): string {
 }
 
 /** «Medidas: 1500 × 1200 mm · Color: Antracita (RAL 7016)», o cadena vacía si no hay nada. */
-export function measuresLine(widthMm: number, heightMm: number, color?: string): string {
-  const parts = [measures(widthMm, heightMm) ? `Medidas: ${measures(widthMm, heightMm)}` : "", color ? `Color: ${color}` : ""];
+export function measuresLine(widthMm: number, heightMm: number, color?: string, text?: string): string {
+  const m = text ?? measures(widthMm, heightMm);
+  const parts = [m ? `Medidas: ${m}` : "", color ? `Color: ${color}` : ""];
   return parts.filter(Boolean).join(" · ");
 }
 

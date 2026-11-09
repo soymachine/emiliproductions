@@ -31,7 +31,7 @@ export function InvoicePdf({ invoice, company }: { invoice: Invoice; company: Co
           <View key={i} style={s.row} wrap={false}>
             <View style={{ flex: COL.desc, paddingRight: 6 }}>
               <LineDescription text={l.description} />
-              {measuresLine(l.widthMm, l.heightMm, l.color) ? <Text style={s.muted}>{measuresLine(l.widthMm, l.heightMm, l.color)}</Text> : null}
+              {measuresLine(l.widthMm, l.heightMm, l.color, l.measuresText) ? <Text style={s.muted}>{measuresLine(l.widthMm, l.heightMm, l.color, l.measuresText)}</Text> : null}
             </View>
             <Text style={[{ width: COL.qty }, s.num]}>{qty(l.quantity)}</Text>
             <Text style={[{ width: COL.price }, s.num]}>{formatEuros(l.unitPriceCents)}</Text>

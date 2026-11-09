@@ -45,7 +45,8 @@ export function DrawingSvg({
               />
             );
           case "path":
-            return <path key={i} d={it.d} fill={it.fill ? "currentColor" : "none"} stroke="currentColor" strokeWidth={it.sw} />;
+            // Las flechas (#000) siguen el color del texto; el resto de rellenos usan su color.
+            return <path key={i} d={it.d} fill={!it.fill ? "none" : it.fill === "#000" ? "currentColor" : it.fill} stroke="currentColor" strokeWidth={it.sw} />;
           case "text":
             return (
               <text key={i} x={it.x} y={it.y} fontSize={it.size} textAnchor={it.anchor} fill="currentColor" fontFamily="Helvetica, Arial, sans-serif">

@@ -16,7 +16,8 @@ export type LeafType =
   | "corredera-dcha"
   | "fijo";
 
-export type DrawingKind = "ventana" | "puerta" | "ninguno";
+/** «inclinado»: fijo con forma de trapecio (p. ej. para escaleras), con un lado superior o inferior inclinado. */
+export type DrawingKind = "ventana" | "puerta" | "inclinado" | "ninguno";
 
 export interface DrawingParams {
   kind: DrawingKind;
@@ -31,6 +32,11 @@ export interface DrawingParams {
   sideRightMm: number;
   /** Color del marco (id de FRAME_COLORS). Sin valor: blanco, como siempre. */
   frameColor?: string;
+  /** Fijo inclinado: altura del lado izquierdo y del derecho en mm (la base es el ancho de la línea). */
+  leftHeightMm?: number;
+  rightHeightMm?: number;
+  /** Fijo inclinado: qué lado va inclinado (por defecto «arriba», con la base recta abajo). */
+  slope?: "arriba" | "abajo";
 }
 
 export type Primitive =
@@ -59,5 +65,6 @@ export const LEAF_LABELS: Record<LeafType, string> = {
 export const KIND_LABELS: Record<DrawingKind, string> = {
   ventana: "Ventana",
   puerta: "Puerta",
+  inclinado: "Fijo inclinado",
   ninguno: "Sin dibujo",
 };

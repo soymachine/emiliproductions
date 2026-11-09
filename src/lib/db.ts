@@ -29,6 +29,7 @@ import type {
 } from "./types";
 import { withPayment, withoutPayment } from "./payments";
 import { frameColorLabel } from "./drawings/colors";
+import { measuresLabel } from "./drawings/shapes";
 
 const col = (name: string) => collection(getDb(), name);
 
@@ -287,6 +288,7 @@ export async function convertQuoteToInvoice(quoteId: string, date: string, annot
         quantity: l.quantity,
         unitPriceCents: l.unitPriceCents,
         color: l.drawing.kind !== "ninguno" ? frameColorLabel(l.drawing.frameColor) : "",
+        measuresText: measuresLabel(l.drawing, l.widthMm, l.heightMm),
       })),
       vatRate: q.vatRate,
       // Las observaciones del presupuesto no pasan a la factura; la factura tiene sus propias anotaciones.
