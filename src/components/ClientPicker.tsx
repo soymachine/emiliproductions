@@ -4,19 +4,22 @@ import { Plus, Search, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { saveClient } from "@/lib/db";
 import { matchesClient, nextClientCode, takenClientCodes } from "@/lib/search";
-import type { Client } from "@/lib/types";
+import type { Client, ClientSnapshot } from "@/lib/types";
 import { ClientForm, EMPTY_CLIENT } from "./ClientForm";
 import { Button, Input, Modal } from "./ui";
 
 export function ClientPicker({
   clients,
   selectedId,
+  snapshot,
   onSelect,
   onCreated,
   disabled,
 }: {
   clients: Client[];
   selectedId: string;
+  /** Copia del cliente guardada en el documento, por si no está en la lista (usuario de consulta). */
+  snapshot?: ClientSnapshot;
   onSelect: (c: Client) => void;
   onCreated: (c: Client) => void;
   disabled?: boolean;
@@ -24,7 +27,8 @@ export function ClientPicker({
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(!selectedId);
   const [creating, setCreating] = useState(false);
-  const selected = clients.find((c) => c.id === selectedId);
+  const selected: (ClientSnapshot & { code?: string }) | undefined =
+    clients.find((c) => c.id === selectedId) ?? (selectedId && snapshot?.name ? snapshot : undefined);
   const results = useMemo(() => clients.filter((c) => matchesClient(c, q)).slice(0, 200), [clients, q]);
 
   return (

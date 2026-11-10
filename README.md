@@ -54,6 +54,22 @@ Al entrar por primera vez se crea el catálogo de artículos inicial y unos dato
   2. Añade su email en minúsculas en `src/lib/access.ts` (`VIEWER_EMAILS`) **y** en `isViewer()` de `firestore.rules`.
   3. `npm run deploy`.
 
+## Seguridad
+
+Los datos (clientes, NIF, presupuestos, facturas) están en Firestore, en la UE, cifrados en tránsito (HTTPS) y en reposo (AES‑256) por Google. La configuración web de Firebase (`apiKey`, etc.) es pública por diseño: lo que protege los datos son las **reglas** de `firestore.rules`.
+
+- Solo las cuentas de las listas de `firestore.rules` pueden leer o escribir. El usuario de consulta solo lee presupuestos, facturas, ajustes y artículos; **no** la colección de clientes.
+- Las facturas no se pueden borrar ni cambiar sus importes.
+- Al pulsar **Salir** se borra la copia local de los datos que guarda el navegador.
+- Firebase Hosting envía cabeceras de seguridad (HSTS, `nosniff`, anti‑iframe, `Referrer-Policy`).
+
+Comprobar en la consola de Firebase (una vez):
+1. **Authentication → Configuración → Acciones de usuario:** desmarcar *Habilitar la creación (registro)*. Las cuentas solo se crean desde la consola.
+2. **Authentication → Configuración:** *Protección contra la enumeración de correos* activada y *Política de contraseñas* con mínimo 10 caracteres.
+3. **Configuración del proyecto → General/Privacidad:** aceptar los *Términos de tratamiento de datos* (RGPD: Google como encargado del tratamiento).
+4. Nunca quitar de las listas de `firestore.rules` una cuenta que siga existiendo sin borrarla también en Authentication, ni añadir emails de cuentas que aún no estén creadas.
+5. Las copias de seguridad JSON (Ajustes → Exportar) contienen todos los datos personales: guardarlas en un sitio privado.
+
 ## Importar clientes de InGnio
 
 Exporta los clientes desde InGnio a CSV o Excel. En **Clientes → Importar** se sube el fichero, la app adivina qué columna es cada dato (nombre, NIF, dirección, CP, población, provincia, teléfonos, email), se puede corregir, y se saltan los NIF repetidos.

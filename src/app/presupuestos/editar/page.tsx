@@ -49,12 +49,13 @@ function QuoteEditorLoader() {
   const { data, error, loading } = useAsync(async () => {
     const [quote, clients, articles, settings] = await Promise.all([
       id || duplicateOf ? getQuote((id || duplicateOf)!) : Promise.resolve(null),
-      listClients(),
+      // El usuario de consulta no tiene acceso a la colección de clientes: usa la copia guardada en el presupuesto.
+      viewer ? Promise.resolve([]) : listClients(),
       listArticleTypes(),
       getSettings(),
     ]);
     return { quote, clients, articles, settings };
-  }, [id, duplicateOf]);
+  }, [id, duplicateOf, viewer]);
 
   if (loading) return <Loading />;
   if (error || !data) return <ErrorBox error={error} />;
@@ -224,6 +225,7 @@ function QuoteEditor({
             <ClientPicker
               clients={clients}
               selectedId={q.clientId}
+              snapshot={q.client}
               onSelect={selectClient}
               onCreated={(c) => {
                 setClients((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)));

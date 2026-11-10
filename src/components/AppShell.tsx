@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "firebase/auth";
 import { FileText, Home, LogOut, Receipt, Settings, SquareStack, Users } from "lucide-react";
 import type { ReactNode } from "react";
-import { getFirebaseAuth } from "@/lib/firebase";
+import { logout } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "./Brand";
 import { useCompany } from "./CompanyContext";
@@ -71,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="border-t border-white/10 px-3 py-3">
           <p className="truncate px-3 pb-2 text-xs text-slate-400">{user?.email}</p>
           <button
-            onClick={() => signOut(getFirebaseAuth())}
+            onClick={() => logout()}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-slate-300 hover:bg-white/5 hover:text-white"
           >
             <LogOut className="size-5 text-slate-400" />
@@ -95,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         ) : (
           <span className="ml-auto" />
         )}
-        <button onClick={() => signOut(getFirebaseAuth())} className="rounded-lg p-2 text-muted-foreground hover:bg-muted" aria-label="Salir">
+        <button onClick={() => logout()} className="rounded-lg p-2 text-muted-foreground hover:bg-muted" aria-label="Salir">
           <LogOut className="size-5" />
         </button>
       </header>

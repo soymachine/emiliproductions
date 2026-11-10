@@ -1,12 +1,14 @@
 "use client";
 
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
-import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth";
+import { connectAuthEmulator, getAuth, signOut, type Auth } from "firebase/auth";
 import {
+  clearIndexedDbPersistence,
   connectFirestoreEmulator,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
+  terminate,
   type Firestore,
 } from "firebase/firestore";
 
@@ -50,4 +52,23 @@ export function getFirebaseAuth(): Auth {
 export function getDb(): Firestore {
   init();
   return db!;
+}
+
+/**
+ * Cierra la sesión y borra la copia local de los datos (caché de Firestore en IndexedDB),
+ * para que no queden clientes ni facturas guardados en el navegador del dispositivo.
+ */
+export async function logout(): Promise<void> {
+  init();
+  try {
+    await signOut(auth!);
+  } finally {
+    try {
+      await terminate(db!);
+      await clearIndexedDbPersistence(db!);
+    } catch (e) {
+      console.warn("No se pudo borrar la caché local", e);
+    }
+    window.location.replace("/");
+  }
 }
