@@ -28,8 +28,9 @@ export const s = StyleSheet.create({
 });
 
 /**
- * Cabecera del documento: a la izquierda logo y datos de la empresa; a la derecha el título
- * (PRESUPUESTO / FACTURA), número y fechas y, debajo, los datos del cliente.
+ * Cabecera del documento, en dos filas:
+ * 1. el logo a la izquierda y, a la derecha, el título (PRESUPUESTO / FACTURA), número y fechas;
+ * 2. los datos de la empresa a la izquierda, a la misma altura que el recuadro del cliente a la derecha.
  * Solo sale en la primera página (no lleva `fixed`).
  */
 export function CompanyHeader({
@@ -44,29 +45,32 @@ export function CompanyHeader({
   client: ClientSnapshot;
 }) {
   return (
-    <View style={s.header}>
-      <View style={{ flex: 1, maxWidth: 270 }}>
-        {company.logoDataUrl ? <Image src={company.logoDataUrl} style={s.logo} /> : null}
-        <Text style={s.companyName}>{company.name}</Text>
-        <Text>NIF: {company.nif}</Text>
-        <Text>{company.address}</Text>
-        <Text>
-          {company.postalCode} {company.city}
-          {company.province ? ` (${company.province})` : ""}
-        </Text>
-        <Text style={s.muted}>
-          {[company.phone, company.email].filter(Boolean).join(" · ")}
-        </Text>
+    <View style={{ marginBottom: 18 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}>
+        <View style={{ flex: 1 }}>{company.logoDataUrl ? <Image src={company.logoDataUrl} style={s.logo} /> : null}</View>
+        <View style={{ width: 245 }}>
+          <Text style={s.docTitle}>{title}</Text>
+          {meta.map((m) => (
+            <Text key={m.label} style={s.docMeta}>
+              <Text style={s.muted}>{m.label}: </Text>
+              <Text style={s.bold}>{m.value}</Text>
+            </Text>
+          ))}
+        </View>
       </View>
-      <View style={{ width: 245 }}>
-        <Text style={s.docTitle}>{title}</Text>
-        {meta.map((m) => (
-          <Text key={m.label} style={s.docMeta}>
-            <Text style={s.muted}>{m.label}: </Text>
-            <Text style={s.bold}>{m.value}</Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginTop: 10 }}>
+        {/* paddingTop = borde + relleno del recuadro, para que el nombre quede a la altura de «CLIENTE». */}
+        <View style={{ flex: 1, paddingTop: 9 }}>
+          <Text style={s.companyName}>{company.name}</Text>
+          <Text>NIF: {company.nif}</Text>
+          <Text>{company.address}</Text>
+          <Text>
+            {company.postalCode} {company.city}
+            {company.province ? ` (${company.province})` : ""}
           </Text>
-        ))}
-        <View style={{ marginTop: 10 }}>
+          <Text style={s.muted}>{[company.phone, company.email].filter(Boolean).join(" · ")}</Text>
+        </View>
+        <View style={{ width: 245 }}>
           <ClientBox client={client} />
         </View>
       </View>
