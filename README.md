@@ -43,8 +43,14 @@ Al entrar por primera vez se crea el catálogo de artículos inicial y unos dato
 
 ### Despliegue automático (opcional)
 
-`.github/workflows/deploy.yml` despliega al hacer push a `main` (GitHub Actions es gratis). Hay que configurar en GitHub → *Settings → Secrets and variables → Actions*:
-- Secreto `FIREBASE_SERVICE_ACCOUNT`: JSON de una cuenta de servicio (Consola Google Cloud → IAM → Cuentas de servicio) con los roles *Firebase Hosting Admin* y *Firebase Rules Admin*.
+`.github/workflows/deploy.yml` publica la app automáticamente (GitHub Actions es gratis) en cada push a `main` o a `claude/wizardly-goldberg-yy6l1w`: instala, pasa los tests, construye y despliega la web y las reglas de Firestore. Si algo falla, no publica. Se ve en la pestaña *Actions* de GitHub, que también tiene el botón *Run workflow* para lanzarlo a mano.
+
+Configuración (una vez):
+1. Firebase → ⚙️ *Configuración del proyecto → Cuentas de servicio → Generar nueva clave privada* (descarga un `.json`).
+2. GitHub → *Settings → Secrets and variables → Actions → New repository secret*: nombre `FIREBASE_SERVICE_ACCOUNT`, valor el contenido del `.json`.
+3. Borrar el `.json` del ordenador.
+
+Sin ese secreto el workflow no falla: avisa y no publica.
 
 ## Usuarios
 

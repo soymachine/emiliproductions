@@ -1,24 +1,43 @@
 name: Desplegar en Firebase Hosting
 
+# Cada push a estas ramas construye la app, pasa los tests y la publica (web + reglas de Firestore).
+# Si algo falla, no se publica y la web se queda como estaba.
 on:
   push:
-    branches: [main]
+    branches: [main, claude/wizardly-goldberg-yy6l1w]
   workflow_dispatch:
+
+# Si llegan dos pushes seguidos, se publica solo el último.
+concurrency:
+  group: deploy
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
     steps:
+      - name: Comprobar la clave de Firebase
+        if: env.HAS_KEY != 'true'
+        run: echo "::warning::Falta el secreto FIREBASE_SERVICE_ACCOUNT en GitHub (Settings → Secrets and variables → Actions). No se publica."
       - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
       - uses: actions/setup-node@v4
+        if: env.HAS_KEY == 'true'
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - if: env.HAS_KEY == 'true'
+        run: npm ci
+      - if: env.HAS_KEY == 'true'
+        run: npm test
+      - if: env.HAS_KEY == 'true'
+        run: npm run build
       - uses: google-github-actions/auth@v2
+        if: env.HAS_KEY == 'true'
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - name: Deploy
+      - name: Publicar
+        if: env.HAS_KEY == 'true'
         run: npx firebase deploy --only hosting,firestore --non-interactive
